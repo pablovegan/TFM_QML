@@ -1,6 +1,6 @@
-from ._qml_model import *
-from ._qml_optimizer import *
-from ._qml_results import *
+from .qml_model import *
+from .qml_optimizer import *
+from .qml_results.__initi__ import *
 
 class Fitter(object):
      def __init__(self,whatever):

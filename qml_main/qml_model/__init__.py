@@ -21,13 +21,10 @@ class QML_model(object):
         quantum classifier Quantum" 4, 226 (2020)
 
     """
-    def __init__(self, f, x, θ, w, cost_fun, probability = None):
+    def __init__(self, f, x, cost_fun, probability = None):
         self.f = f
         self.x = x
-        self.θ = θ
-        self.w = w
         self.cost_fun = cost_fun
-        self.L = w.size
         self.G = 1 if type(x) is float else x.size
 
         if cost_fun != 'MSE' or cost_fun != 'RMSE': 
@@ -70,26 +67,26 @@ class QML_model(object):
         Ui = np.einsum('mn,np,pqi->mqi', Rz, Ry, Rx)
         return np.moveaxis(Ui, -1, 0)  # move last axis to the first position keeping the order of the rest axis
 
-    def model(self):
+    def model(self, θ: np.ndarray, w: np.ndarray):
         """
         Returns our variational ansatz, the product of the L layers.
         Since we are interested in the amplitude/probability of the |0> qubit
         we select the (0,0) element of the unitary matrix U (for every x).
         """
-        U = self.layer(self.x, self.θ[:,0], self.w[0])[:,:,0]
-        for i in range(1,self.L):
-            Ui = self.layer(self.x, self.θ[:,i], self.w[i])
+        U = self.layer(self.x, θ[:,0], w[0])[:,:,0]
+        for i in range(1, w.size):
+            Ui = self.layer(self.x, θ[:,i], w[i])
             U = np.einsum('imn,in->im', Ui, U)
         return U[:,0]
 
-    def evaluate_model(self):
+    def evaluate_model(self, θ: np.ndarray, w: np.ndarray):
         """Calculate the amplitude or probability of the |0>, depending on the encoding."""
-        U_00 = self.model()
+        U_00 = self.model(θ, w)
         return (U_00*np.conjugate(U_00)).real if self.probability else U_00
 
-    def cost(self):
+    def cost(self, θ: np.ndarray, w: np.ndarray):
         """Returns the cost function: MSE or RMSE."""
-        f_approx = self.evaluate_model()
+        f_approx = self.evaluate_model(θ, w)
         if self.cost_fun == 'MSE':
             return np.mean(np.abs(f_approx - self.f)**2)
         else:
@@ -117,26 +114,27 @@ class QML_model(object):
 
         return np.array([Dw, Dx, Dy, Dz])
 
-    def der_model(self):
+    def der_model(self, θ: np.ndarray, w: np.ndarray):
         """"Create recursively the derivatives with respect to each parameter of the entire net. """
+        L = w.size
         A = np.tensordot(np.ones(self.G), np.identity(2), axes=0)  # dim (G,2,2)
-        D = np.zeros((self.L,4,self.G,2,2), dtype=np.complex128)
-        for i in range(self.L):  
-            DUi = self.der_layer(self.θ[:,i], self.w[i]) # dim (4,G,2,2)
+        D = np.zeros((L,4,self.G,2,2), dtype=np.complex128)
+        for i in range(L):  
+            DUi = self.der_layer(θ[:,i], w[i]) # dim (4,G,2,2)
             D[i,...] = np.einsum('jimn,inp->jimp', DUi, A)  # j is each of the derivatives
             # Multiply derivative times next layer
-            Ui = self.layer(self.θ[:,i], self.w[i])
+            Ui = self.layer(θ[:,i], w[i])
             A = np.einsum('imn,inp->imp', Ui, A)
         # In the first iteration we reuse the L-th layer
         B = Ui  
-        for i in range(self.L-2,-1,-1):
+        for i in range(L-2,-1,-1):
             D[i,...] = np.einsum('imn,jinp->jimp', B, D[i,...]) 
             # Multiply derivative times previous layer
-            Ui = self.layer(self.x, self.θ[:,i], self.w[i])
+            Ui = self.layer(self.x, θ[:,i], w[i])
             B = np.einsum('imn,inp->imp', B, Ui)
         return D, A # D is shape (L,4,G,2,2). We also return the model
 
-    def der_cost(self, return_cost = False):
+    def der_cost(self, θ: np.ndarray, w: np.ndarray, return_cost = False):
         """"
         Returns the gradient of the cost function with respect to each parameter. The derivative
         depends on the encoding (probability/amplitude) and the cost function (MSE/RMSE).
@@ -147,7 +145,7 @@ class QML_model(object):
             If True, return the gradient as well as the cost function.
 
         """
-        ders, A = self.der_model()
+        ders, A = self.der_model(θ, w)
         U = A[:,0,0]
 
         if self.probability:
