@@ -21,11 +21,11 @@ class QML_model(object):
         quantum classifier Quantum" 4, 226 (2020)
 
     """
-    def __init__(self, f, x, cost_fun, probability = None):
-        self.f = f
+    def __init__(self, x, f, cost_fun, probability = None):
         self.x = x
-        self.cost_fun = cost_fun
         self.G = 1 if type(x) is float else x.size
+        self.f = f
+        self.cost_fun = cost_fun
 
         if cost_fun != 'MSE' or cost_fun != 'RMSE': 
             raise ValueError('Cost function must be either MSE or RMSE.') 
@@ -39,7 +39,7 @@ class QML_model(object):
         else:
             self.probability = probability
 
-    def layer(self, θi: np.ndarray, wi: float) -> tuple:
+    def layer(self, x: np.ndarray or float, θi: np.ndarray, wi: float) -> tuple:
         """
         Each layer is the product of three rotations.
         
@@ -56,7 +56,8 @@ class QML_model(object):
             Unitary matrix of the layer.
 
         """
-        ϕ1 = wi*self.x+θi[0]*np.ones(self.G)
+        G = 1 if type(x) is float else x.size
+        ϕ1 = wi*x+θi[0]*np.ones(G)
         ϕ2 = θi[1]
         ϕ3 = θi[2]
 
@@ -67,31 +68,30 @@ class QML_model(object):
         Ui = np.einsum('mn,np,pqi->mqi', Rz, Ry, Rx)
         return np.moveaxis(Ui, -1, 0)  # move last axis to the first position keeping the order of the rest axis
 
-    def model(self, θ: np.ndarray, w: np.ndarray):
+    def model(self, x: np.ndarray or float, θ: np.ndarray, w: np.ndarray):
         """
         Returns our variational ansatz, the product of the L layers.
         Since we are interested in the amplitude/probability of the |0> qubit
         we select the (0,0) element of the unitary matrix U (for every x).
         """
-        U = self.layer(self.x, θ[:,0], w[0])[:,:,0]
+        U = self.layer(x, θ[:,0], w[0])[:,:,0]
         for i in range(1, w.size):
-            Ui = self.layer(self.x, θ[:,i], w[i])
+            Ui = self.layer(x, θ[:,i], w[i])
             U = np.einsum('imn,in->im', Ui, U)
         return U[:,0]
 
-    def evaluate_model(self, θ: np.ndarray, w: np.ndarray):
+    def evaluate_model(self, x: np.ndarray or float, θ: np.ndarray, w: np.ndarray):
         """Calculate the amplitude or probability of the |0>, depending on the encoding."""
-        U_00 = self.model(θ, w)
+        U_00 = self.model(x, θ, w)
         return (U_00*np.conjugate(U_00)).real if self.probability else U_00
 
     def cost(self, θ: np.ndarray, w: np.ndarray):
         """Returns the cost function: MSE or RMSE."""
-        f_approx = self.evaluate_model(θ, w)
+        f_approx = self.evaluate_model(self.x, θ, w)
         if self.cost_fun == 'MSE':
             return np.mean(np.abs(f_approx - self.f)**2)
         else:
             return np.sqrt(np.mean(np.abs(f_approx - self.f)**2))
-
 
     def der_layer(self, θi: np.ndarray, wi: float) -> tuple:
         """"Returns the derivative of one layer with respect to its 4 parameters."""
