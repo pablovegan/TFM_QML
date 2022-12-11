@@ -1,6 +1,7 @@
 # coding=UTF-8
 
 import numpy as np
+from test_functions import Test_Functions
 
 class QML_model(object):
     """
@@ -21,7 +22,13 @@ class QML_model(object):
         quantum classifier Quantum" 4, 226 (2020)
 
     """
-    def __init__(self, x, f, cost_fun, probability = None):
+    def __init__(self,
+                function_type: str = 'gaussian',
+                f_params: dict = {'mean': 0.0, 'std': 2, 'coef': 1},
+                grid_size = 31,
+                cost_fun = 'RMSE',
+                probability = None):
+        function = getattr(Test_Functions, function_type)
         self.x = x
         self.G = 1 if type(x) is float else x.size
         self.f = f

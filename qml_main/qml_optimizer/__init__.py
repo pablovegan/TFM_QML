@@ -38,7 +38,7 @@ class QML_optimizer(QML_model):
         return minimize(intermediate_cost, φ_init, method = self.opt_method,
              jac = intermedio_der_cost, tol = 1e-12, options={'maxiter': 10000})
 
-    def adam(self, φ, print_cost: bool = True, plot_cost = False, n_iter = 800,
+    def adam(self, φ, print_cost: bool = True, n_iter = 800,
             alpha = 0.01, beta1 = 0.9, beta2 = 0.999, eps=1e-8):
         '''
         Parameters

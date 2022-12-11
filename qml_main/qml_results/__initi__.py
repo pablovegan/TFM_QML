@@ -11,6 +11,7 @@ from qml_optimizer import QML_optimizer
 
 class QML_results(object):
     def __init__(self,
+                min_layers, max_layers,
                 function_type: str = 'gaussian',
                 f_params: dict = {'mean': 0.0, 'std': 2, 'coef': 1},
                 grid_size = 31,
@@ -20,8 +21,12 @@ class QML_results(object):
         self.f_params = f_params
         self.grid_size = grid_size
         self.interval = interval
+        self.min_layers = min_layers
+        self.max_layers = max_layers
+        QML_optimizer(f, x, cost_fun, probability = None, opt_method: str = 'L-BFGS-B', method_params: dict = {'n_iter': 800, 'alpha': 0.01, 'beta1': 0.9, 'beta2': 0.999, 'eps': 1e-8})
 
-    def error_perceptron(self, φ: np.ndarray, probability: bool = True):
+
+    def error_results(self, φ: np.ndarray, probability: bool = True):
         """"
         Error in the approximation of the function by the qubit perceptron.
         Returns the error measured in different norms.
@@ -55,18 +60,16 @@ class QML_results(object):
         return error_l2[0], error_l1[0], error_inf, error_infid
 
 
-    def graficas_errores(min_layers, max_layers,
+    def layer_results(min_layers, max_layers,
                         opt_method: str = 'L-BFGS-B',
+                        method_params: dict = {'n_iter': 800, 'alpha': 0.01, 'beta1': 0.9, 'beta2': 0.999, 'eps': 1e-8},
                         seed: int = 4,
                         φ_init: Optional[np.ndarray] = None,
-                        show_diff = False,
-                        print_cost: bool = False,
                         cost_fun: str = 'sqrt',
                         incremental_opt: bool = True,
                         initial_coef: float = 0.3,
                         new_layer_position: str = 'random',
-                        new_layer_coef: float = 0.2,
-                        method_params: dict = {'n_iter': 800, 'alpha': 0.01, 'beta1': 0.9, 'beta2': 0.999, 'eps': 1e-8}):
+                        new_layer_coef: float = 0.2):
         
         l2_list, l1_list, inf_list, infid_list = [], [], [], []
         layer_list = list(range(min_layers, max_layers+1))
@@ -132,19 +135,12 @@ class QML_results(object):
 
         return layer_list, l2_list, l1_list, inf_list, infid_list, cost_error
 
-    def mean_seed_errores(min_layers, max_layers,
-                        opt_method: str = 'L-BFGS-B',
+    def seed_results(min_layers, max_layers,
+                        opt_method: str,
+                        cost_fun: str,
                         φ_init: Optional[np.ndarray] = None,
-                        show_plot: bool = False,
-                        show_final_plot: bool = True,
-                        show_error_plot: bool = True,
-                        show_box_plot = True,
-                        show_diff = False,
-                        print_cost: bool = False,
-                        cost_fun: str = 'sqrt',
                         incremental_opt: bool = True,
-                        print_params: bool = True,
-                        cc: float = 0.3,
+                        initial_coef: float = 0.3,
                         new_layer_position: str = 'random',
                         new_layer_coef: float = 10e-4,
                         plot_cost_error: bool = False,
@@ -153,30 +149,20 @@ class QML_results(object):
                         method_params: dict = {'n_iter': 800, 'alpha': 0.01, 'beta1': 0.9, 'beta2': 0.999, 'eps': 1e-8}):          
 
         num_layer = max_layers - min_layers + 1
-        l2, l1, inf, fid, cost = np.zeros(num_layer), np.zeros(num_layer), np.zeros(num_layer), np.zeros(num_layer), np.zeros(num_layer)
 
         cost_array = np.zeros((num_seed,num_layer))
         l1_array = np.zeros((num_seed,num_layer))
         l2_array = np.zeros((num_seed,num_layer))
-        fid_array = np.zeros((num_seed,num_layer))
+        infid_array = np.zeros((num_seed,num_layer))
         inf_array = np.zeros((num_seed,num_layer))
 
         for i, seed in enumerate(np.random.choice(range(0,100), num_seed, replace=False)):
-            layer_list, l2_list, l1_list, inf_list, fid_list, cost_list = graficas_errores(min_layers = min_layers, max_layers = max_layers, x = x, f = f, grid_size = grid_size, function = function, 
-                f_params = f_params,interval = interval,int_method = int_method,opt_method = opt_method,φ_init = φ_init,
-                show_plot = show_plot, show_final_plot = show_final_plot,show_error_plot = show_error_plot,show_diff = show_diff,
-                print_cost = print_cost,cost_fun = cost_fun,incremental_opt = incremental_opt,print_params = print_params, cc = cc,
+            layer_list, l2_array[i,:], l1_array[i,:], inf_array[i,:],
+            infid_array[i,:], cost_array[i,:] = graficas_errores(min_layers = min_layers,
+            max_layers = max_layers, x = x, f = f, grid_size = grid_size,
+             function = function, opt_method = opt_method,φ_init = φ_init,cost_fun = cost_fun,incremental_opt = incremental_opt, initial_coef = initial_coef,
                 new_layer_position = new_layer_position,new_layer_coef = new_layer_coef,plot_cost_error = plot_cost_error,
                 method_params=method_params, seed = seed)
 
-            # Seeds en el eje 0 y capas en el eje 1. Queremos las seeds en cada box plot.'''
-            cost_array[i,:]= np.array(cost_list)
-            l1_array[i,:]= np.array(l1_list)
-            l2_array[i,:]= np.array(l2_list)
-            fid_array[i,:]= np.array(fid_list)
-            inf_array[i,:]= np.array(inf_list)
-
         with open(filename+'.pkl', 'wb') as file:
-            pickle.dump((layer_list, l2_array, l1_array, inf_array, fid_array, cost_array), file)
-
-        return
+            pickle.dump((layer_list, l2_array, l1_array, inf_array, infid_array, cost_array), file)
