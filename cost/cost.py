@@ -45,7 +45,6 @@ class CostFunction:
             """Returns the cost function: MSE or RMSE."""
             fn_approx = self.evaluate_model(self.x, θ, w)
 
-
     def der_layer(self, θi: np.ndarray, wi: float) -> tuple:
         """"Returns the derivative of one layer with respect to its 4 parameters."""
         
@@ -102,15 +101,15 @@ class CostFunction:
         if self.probability:
             E = (U*np.conj(U)).real - self.f
             if self.cost_fun == 'MSE':
-                der_C = 4/self.G * np.array([[np.dot(E.real, np.real(np.conj(U)*ders[i,j,:,0,0])) for i in range(self.L)] for j in range(4)])
+                der_C = 4/self.G * np.array([[np.dot(E.real, np.real(np.conj(U)*ders[i,j,:])) for i in range(self.L)] for j in range(4)])
             else:
-                der_C = 2/(np.sqrt(self.G)*np.sqrt(np.sum(np.abs(E)**2)+1e-9)) * np.array([[np.dot(E, np.real(np.conj(U)*ders[i,j,:,0,0])) for i in range(self.L)] for j in range(4)])
+                der_C = 2/(np.sqrt(self.G)*np.sqrt(np.sum(np.abs(E)**2)+1e-9)) * np.array([[np.dot(E, np.real(np.conj(U)*ders[i,j,:])) for i in range(self.L)] for j in range(4)])
         else:
             E = U - self.f   # error in approximation
             if self.cost_fun == 'MSE':
-                der_C = 2/self.G * np.array([[np.real(np.dot(np.conj(E), ders[i,j,:,0,0])) for i in range(self.L)] for j in range(4)])
+                der_C = 2/self.G * np.array([[np.real(np.dot(np.conj(E), ders[i,j,:])) for i in range(self.L)] for j in range(4)])
             else:
-                der_C = 1/(np.sqrt(self.G)*np.sqrt(np.sum(np.abs(E)**2)+1e-9)) * np.array([[np.real(np.dot(np.conj(E), ders[i,j,:,0,0])) for i in range(self.L)] for j in range(4)])
+                der_C = 1/(np.sqrt(self.G)*np.sqrt(np.sum(np.abs(E)**2)+1e-9)) * np.array([[np.real(np.dot(np.conj(E), ders[i,j,:])) for i in range(self.L)] for j in range(4)])
         # devolvemos un array con la misma estructura que ϕ = [w, θ_0, θ_1, θ_2]
         if return_cost:
             if self.probability:
@@ -119,4 +118,3 @@ class CostFunction:
                 return der_C.flatten(), np.mean(np.abs(U - self.f)**2)
         else:
             return der_C.flatten()
-    

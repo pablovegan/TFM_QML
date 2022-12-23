@@ -1,12 +1,13 @@
 # coding=UTF-8
 from typing import Optional
+import pickle
+
 import numpy as np
 from numpy import pi
 import matplotlib.style as style
 import matplotlib.pyplot as plt
 from scipy.optimize import minimize, check_grad
 import scipy.integrate as integrate
-import pickle
 #from qiskit.algorithms.optimizers import SPSA
 # from pathos.multiprocessing import ProcessingPool, cpu_count
 # from mpi4py import MPI
@@ -258,6 +259,7 @@ def der_coste_sqrt(x, f, θ, w, probability = True, return_cost = False, model =
 def split(φ):
     layers = φ.size // 4
     return φ[0:layers], φ[layers:].reshape(3, layers)
+
 def blackbox_minimizer(x, f, φ_init, probability: bool,
              opt_method: str = 'L-BFGS-B', print_cost: bool = False, cost_fun = 'sqrt', model = 'rotation'):
     
@@ -586,6 +588,7 @@ def graficas_errores(seed, min_layers, max_layers,
                 plt.plot(x, f)
                 plt.plot(x, f_approx.real)
                 plt.title(function + ' optimization with ' + opt_method)
+                plt.yscale('log')
                 plt.show()
             break
         if incremental_opt is True:

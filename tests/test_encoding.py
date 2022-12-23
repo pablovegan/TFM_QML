@@ -31,7 +31,7 @@ class TestEncoding(unittest.TestCase):
     def test_model(self):
         pennylane_list = []
         for x in self.x:
-            pennylane_list.append(circuit(x, self.θ, self.w)[0])
+            pennylane_list.append(circuit(x, self.θ, self.w)[0]) # pylint: disable=unsubscriptable-object
         pennylane_list = array(pennylane_list)
         model = Model('amp')
         assert_allclose(model.evaluate(self.x, self.θ, self.w),
