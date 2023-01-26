@@ -1,2 +1,1 @@
-from .circuit import Model
-from .cost import CostFunction
+from .circuit import Cost
