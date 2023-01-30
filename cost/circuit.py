@@ -28,14 +28,6 @@ class Cost:
                 "Invalid encoding '{encoding}'. Choose between 'prob' or 'amp'."
             )
 
-    @staticmethod
-    def mse_error(fn_exact: np.ndarray, fn_approx: np.ndarray) -> float:
-        return np.mean(np.absolute(fn_exact - fn_approx) ** 2)
-
-    @staticmethod
-    def rmse_error(fn_exact: np.ndarray, fn_approx: np.ndarray) -> float:
-        return np.sqrt(np.mean(np.absolute(fn_exact - fn_approx) ** 2))
-
     def __call__(self, θ: np.ndarray, w: np.ndarray):
         ...
 
@@ -64,10 +56,8 @@ class Cost:
                 [0, cos(θ[2] / 2) + 1j * sin(θ[2] / 2)],
             ]
         )
-
-        return np.einsum(
-            "mn, np, pqg -> gmq", Rz, Ry, Rx
-        )  # move the x axis to first position
+        # move the x axis to first position
+        return np.einsum("mn, np, pqg -> gmq", Rz, Ry, Rx)
 
     def _encoding(self, θ: np.ndarray, w: np.ndarray) -> np.ndarray:
         """
@@ -82,9 +72,17 @@ class Cost:
 
         return U[:, 0].real ** 2 + U[:, 0].imag ** 2 if self.prob else U[:, 0]
 
+    @staticmethod
+    def mse_error(fn_exact: np.ndarray, fn_approx: np.ndarray) -> float:
+        return np.mean(np.absolute(fn_exact - fn_approx) ** 2)
+
+    @staticmethod
+    def rmse_error(fn_exact: np.ndarray, fn_approx: np.ndarray) -> float:
+        return np.sqrt(np.mean(np.absolute(fn_exact - fn_approx) ** 2))
+
     def _der_layer(self, θ: np.ndarray, w: float) -> tuple:
         """Returns the derivative of one layer with respect to its 4 parameters."""
-        ϕ = w * self.x + θ[1]
+        ϕ = w * self.x + θ[0]
 
         Rx = np.array([[cos(ϕ / 2), -1j * sin(ϕ / 2)], [-1j * sin(ϕ / 2), cos(ϕ / 2)]])
         Ry = np.array([[cos(θ[1] / 2), -sin(θ[1] / 2)], [sin(θ[1] / 2), cos(θ[1] / 2)]])
@@ -109,7 +107,7 @@ class Cost:
         )
 
         Dx = np.einsum("mn, np, pqg -> gmq", Rz, Ry, DRx)
-        Dw = np.einsum("mn, np, pqg, g -> gmq", Rz, Ry, DRx, self.x)
+        Dw = np.einsum("gmq, g -> gmq", Dx, self.x)
         Dy = np.einsum("mn, np, pqg -> gmq", Rz, DRy, Rx)
         Dz = np.einsum("mn, np, pqg -> gmq", DRz, Ry, Rx)
 
@@ -118,8 +116,8 @@ class Cost:
     def _der_amp_encoding(self, θ: np.ndarray, w: np.ndarray):
         """ "Create recursively the derivatives with respect to each parameter of the entire net."""
         assert θ.shape[1] == w.size, (
-            f"Length of w = {w.size}, but must equal",
-            f"size of axis 0 in θ with size {θ.shape[1]}.",
+            f"Length of w = {w.size}, but must equal"
+            f"size of axis 0 in θ with size {θ.shape[1]}."
         )
 
         layers = w.size
@@ -128,9 +126,8 @@ class Cost:
 
         for i in range(layers):
             DUi = self._der_layer(θ[:, i], w[i])  # dim (4,G,2,2)
-            D[i, ...] = np.einsum(
-                "jgmn, gnp -> jgmp", DUi, U
-            )  # j is each of the derivatives
+            # j is each of the derivatives
+            D[i, ...] = np.einsum("jgmn, gnp -> jgmp", DUi, U)
             # Multiply derivative times next layer
             Ui = self._layer(θ[:, i], w[i])
             U = np.einsum("gmn, gnp -> gmp", Ui, U)
@@ -140,18 +137,21 @@ class Cost:
             D[i, ...] = np.einsum("gmn, jgnp -> jgmp", B, D[i, ...])
             # Multiply derivative times previous layer
             Ui = self._layer(θ[:, i], w[i])
-            B = np.einsum("gmn, gnp -> gmp", B, Ui)
+            B = np.einsum("gin, gnj -> gij", B, Ui)
         # D is shape (layers,4,x.size)
-
-        D = D[:, :, :, 0, 0].reshape(layers * 4, self.x_size)
-        D = np.swapaxes(D, 0, 1)
-
-        return D, U[:, 0, 0]  # D has shape (x, L*4)
+        print(D.shape)
+        D = D[:, :, :, 0, 0].swapaxes(0, 2)  # D is shape (x.size, 4, layers)
+        print(D.shape)
+        # D has shape (x, L*4)
+        # return (D.reshape(self.x_size, -1), U[:, 0, 0])
+        D = D.reshape(self.x_size, -1)
+        print(D.shape)
+        return D
 
     def _der_prob_encoding(self, θ: np.ndarray, w: np.ndarray):
 
         der, enc = self._der_amp_encoding(θ, w)
-        enc_conj_der = np.einsum("g, gij -> gij", enc.conj(), der)
+        enc_conj_der = np.einsum("g, gi -> gi", enc.conj(), der)
 
         return 2 * np.real(enc_conj_der), enc
 
@@ -164,20 +164,21 @@ class Cost:
 
         fn_diff = fn_approx - self.fn
 
-        # TODO: terminar
-        2 * np.einsum("i, mni -> mn", fn_diff, grad_enc)
+        return 2 * np.einsum("g, gi -> i", fn_diff, grad)
 
     def grad_rmse(self, θ: np.ndarray, w: np.ndarray):
 
-        layers = w.size
-        ders, fn_approx = self.der_model(θ, w)
+        if self.prob:
+            grad, fn_approx = self._der_prob_encoding(θ, w)
+        else:
+            grad, fn_approx = self._der_amp_encoding(θ, w)
+
         fn_diff = fn_approx - self.fn
-        der_C = (
+        return (
             2
             / (np.sqrt(self.x_size) * np.sqrt(np.sum(np.abs(fn_diff) ** 2) + 1e-9))
-            * ders
+            * grad
         )
-        # TODO: terminar
 
     def grad(self, θ: np.ndarray, w: np.ndarray, return_cost=False):
         """
@@ -191,9 +192,11 @@ class Cost:
 
         """
         layers = w.size
-        ders, U = self.der_model(θ, w)
+        ders, U = self._der_amp_encoding(θ, w)
 
-        if self.probability:
+        ders = ders.reshape(self.x_size, 4, layers).swapaxes(0, 2)
+
+        if self.prob:
             E = (U * np.conj(U)).real - self.fn
             if self.cost_fun == "MSE":
                 der_C = (
