@@ -113,12 +113,8 @@ class Cost:
 
         return np.array([Dw, Dx, Dy, Dz])
 
-    def _der_amp_encoding(self, θ: np.ndarray, w: np.ndarray):
+    def _grad_amp_encoding(self, θ: np.ndarray, w: np.ndarray):
         """ "Create recursively the derivatives with respect to each parameter of the entire net."""
-        assert θ.shape[1] == w.size, (
-            f"Length of w = {w.size}, but must equal"
-            f"size of axis 0 in θ with size {θ.shape[1]}."
-        )
 
         layers = w.size
         U = np.tensordot(np.ones(self.x_size), np.identity(2), axes=0)  # dim (G,2,2)
@@ -139,28 +135,24 @@ class Cost:
             Ui = self._layer(θ[:, i], w[i])
             B = np.einsum("gin, gnj -> gij", B, Ui)
         # D is shape (layers,4,x.size)
-        print(D.shape)
         D = D[:, :, :, 0, 0].swapaxes(0, 2)  # D is shape (x.size, 4, layers)
-        print(D.shape)
-        # D has shape (x, L*4)
         # return (D.reshape(self.x_size, -1), U[:, 0, 0])
-        D = D.reshape(self.x_size, -1)
-        print(D.shape)
-        return D
+        return D.reshape(self.x_size, -1), U[:, 0, 0] # D has shape (x, L*4)
 
-    def _der_prob_encoding(self, θ: np.ndarray, w: np.ndarray):
+    def _grad_prob_encoding(self, θ: np.ndarray, w: np.ndarray):
 
-        der, enc = self._der_amp_encoding(θ, w)
-        enc_conj_der = np.einsum("g, gi -> gi", enc.conj(), der)
+        grad, enc = self._grad_amp_encoding(θ, w)
+        enc_conj_grad = np.einsum("g, gi -> gi", enc.conj(), grad)
 
-        return 2 * np.real(enc_conj_der), enc
+        return 2 * np.real(enc_conj_grad), enc
+        # return 2 * np.real(enc_conj_grad)
 
     def grad_mse(self, θ: np.ndarray, w: np.ndarray):
 
         if self.prob:
-            grad, fn_approx = self._der_prob_encoding(θ, w)
+            grad, fn_approx = self._grad_prob_encoding(θ, w)
         else:
-            grad, fn_approx = self._der_amp_encoding(θ, w)
+            grad, fn_approx = self._grad_amp_encoding(θ, w)
 
         fn_diff = fn_approx - self.fn
 
@@ -169,9 +161,9 @@ class Cost:
     def grad_rmse(self, θ: np.ndarray, w: np.ndarray):
 
         if self.prob:
-            grad, fn_approx = self._der_prob_encoding(θ, w)
+            grad, fn_approx = self._grad_prob_encoding(θ, w)
         else:
-            grad, fn_approx = self._der_amp_encoding(θ, w)
+            grad, fn_approx = self._grad_amp_encoding(θ, w)
 
         fn_diff = fn_approx - self.fn
         return (

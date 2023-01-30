@@ -19,11 +19,16 @@ def circuit(x, θ, w) -> ndarray:
     return qml.state()
 
 
+def split(φ):
+    layers = φ.size // 4
+    return φ[0:layers], φ[layers:].reshape(3, layers)
+
+
 class TestEncoding(unittest.TestCase):
     """Testing our modules."""
 
     def setUp(self) -> None:
-        self.x = uniform(-20, 20, 10)
+        self.x = uniform(-20, 20, 100)
         layers = randint(1, 12)
         self.φ = np.random.randn(layers * 4)
         self.θ = uniform(-5, 5, 3 * layers).reshape(3, layers)
@@ -43,7 +48,7 @@ class TestEncoding(unittest.TestCase):
             err_msg="Amplitude encoding not working.",
         )
 
-    def test_der_layer(self):
+    def test_grad_layer(self):
         model = Cost(x=self.x, fn=0, encoding="amp")
         δ = 0.000001
         w = 2
@@ -54,13 +59,9 @@ class TestEncoding(unittest.TestCase):
         DUx = model._der_layer(θ0, w)[1]
         assert_allclose(DUx_approx, DUx, rtol=1e-6, atol=1e-7)
 
-    def test_der_amp_encoding(self):
+    def test_grad_amp_encoding(self):
         model = Cost(x=self.x, fn=0, encoding="amp")
         φ = np.random.randn(4 * 6)
-
-        def split(φ):
-            layers = φ.size // 4
-            return φ[0:layers], φ[layers:].reshape(3, layers)
 
         def fun(φ):
             w, θ = split(φ)
@@ -68,49 +69,44 @@ class TestEncoding(unittest.TestCase):
 
         def grad(φ):
             w, θ = split(φ)
-            return np.sum(model._der_amp_encoding(θ, w), axis=0)
+            return np.sum(model._grad_amp_encoding(θ, w)[0], axis=0)
 
         print("check grad ", check_grad(fun, grad, φ))
-        assert check_grad(fun, grad, φ) < 1e-4
+        assert check_grad(fun, grad, φ) < 1e-5
 
-    def test_grad(self):
-        def grad(g):
-            def wrapper(φ):
-                print("With sour cream and chives!")
-
-                def split():
-                    layers = φ.size // 4
-                    return φ[0:layers], φ[layers:].reshape(3, layers)
-
-                w, θ = split()
-                return np.sum(g(θ, w)[0], axis=0)
-
-            return wrapper
-
-        def fun(f):
-            def wrapper(φ):
-                def split():
-                    layers = φ.size // 4
-                    return φ[0:layers], φ[layers:].reshape(3, layers)
-
-                w, θ = split()
-                return np.sum(f(θ, w), axis=0)
-
-            return wrapper
-
-        # TODO: devolver el gradiente en un solo vector
-        model = Cost(x=self.x, fn=0, encoding="amp")
-        assert (
-            check_grad(fun(model._encoding), grad(model._der_amp_encoding), self.φ)
-            < 1e-4
-        )
-
+    def test_grad_prob_encoding(self):
         model = Cost(x=self.x, fn=0, encoding="prob")
-        assert (
-            check_grad(fun(model._encoding), grad(model._der_prob_encoding), self.φ)
-            < 1e-4
-        )
+        φ = np.random.randn(4 * 6)
 
+        def fun(φ):
+            w, θ = split(φ)
+            return np.sum(model._encoding(θ, w))
+
+        def grad(φ):
+            w, θ = split(φ)
+            return np.sum(model._grad_prob_encoding(θ, w)[0], axis=0)
+
+        print("check grad ", check_grad(fun, grad, φ))
+        assert check_grad(fun, grad, φ) < 1e-5
+
+    def test_grad_mse(self):
+        
+        x = np.linspace(-2,2,100)
+        fn = np.exp(-(x)**2/(2*0.5**2)) / (0.5*np.sqrt(2*np.pi)) 
+        model = Cost(x=x, fn=fn, encoding="prob")
+        φ = np.random.randn(4 * 6)
+
+        def fun(φ):
+            w, θ = split(φ)
+            fn = model._encoding(θ, w)
+            return model.mse_error(model.fn, fn)
+
+        def grad(φ):
+            w, θ = split(φ)
+            return model.grad_mse(θ, w)
+
+        print("check grad ", check_grad(fun, grad, φ))
+        assert check_grad(fun, grad, φ) < 1e-2
 
 if __name__ == "__main__":
     unittest.main()
