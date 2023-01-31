@@ -20,13 +20,15 @@ class Cost:
         self.x_size = x.size
         self.fn = fn
         if encoding == "prob":
-            self.prob = True
+            self.prob = True  # TODO: quitar esto
+            self.encoding = self._prob_encoding
+            self.grad_encoding = self._grad_prob_encoding
         elif encoding == "amp":
             self.prob = False
+            self.encoding = self._amp_encoding
+            self.grad_encoding = self._grad_amp_encoding
         else:
-            raise ValueError(
-                "Invalid encoding '{encoding}'. Choose between 'prob' or 'amp'."
-            )
+            raise ValueError("Invalid encoding '{encoding}'. Choose between 'prob' or 'amp'.")
 
     def __call__(self, θ: np.ndarray, w: np.ndarray):
         ...
@@ -51,15 +53,12 @@ class Cost:
         Rx = np.array([[cos(ϕ / 2), -1j * sin(ϕ / 2)], [-1j * sin(ϕ / 2), cos(ϕ / 2)]])
         Ry = np.array([[cos(θ[1] / 2), -sin(θ[1] / 2)], [sin(θ[1] / 2), cos(θ[1] / 2)]])
         Rz = np.array(
-            [
-                [cos(θ[2] / 2) - 1j * sin(θ[2] / 2), 0],
-                [0, cos(θ[2] / 2) + 1j * sin(θ[2] / 2)],
-            ]
+            [[cos(θ[2] / 2) - 1j * sin(θ[2] / 2), 0], [0, cos(θ[2] / 2) + 1j * sin(θ[2] / 2)]]
         )
         # move the x axis to first position
         return np.einsum("mn, np, pqg -> gmq", Rz, Ry, Rx)
 
-    def _encoding(self, θ: np.ndarray, w: np.ndarray) -> np.ndarray:
+    def _amp_encoding(self, θ: np.ndarray, w: np.ndarray) -> np.ndarray:
         """
         Returns our variational ansatz, the product of the L layers.
         Since we are interested in the amplitude/probability of the |0> qubit
@@ -69,8 +68,16 @@ class Cost:
         for i in range(1, w.size):
             Ui = self._layer(θ[:, i], w[i])
             U = np.einsum("gmn, gn -> gm", Ui, U)
+        return U[:, 0]
 
-        return U[:, 0].real ** 2 + U[:, 0].imag ** 2 if self.prob else U[:, 0]
+    def _prob_encoding(self, θ: np.ndarray, w: np.ndarray) -> np.ndarray:
+        """
+        Returns our variational ansatz, the product of the L layers.
+        Since we are interested in the amplitude/probability of the |0> qubit
+        we select the (0,0) element of the unitary matrix U (for every x).
+        """
+        fn_amp = self._amp_encoding(θ, w)
+        return fn_amp.real**2 + fn_amp.imag**2
 
     @staticmethod
     def mse_error(fn_exact: np.ndarray, fn_approx: np.ndarray) -> float:
@@ -78,7 +85,7 @@ class Cost:
 
     @staticmethod
     def rmse_error(fn_exact: np.ndarray, fn_approx: np.ndarray) -> float:
-        return np.sqrt(np.mean(np.absolute(fn_exact - fn_approx) ** 2))
+        return np.sqrt(Cost.mse_error(fn_exact, fn_approx))
 
     def _der_layer(self, θ: np.ndarray, w: float) -> tuple:
         """Returns the derivative of one layer with respect to its 4 parameters."""
@@ -87,23 +94,13 @@ class Cost:
         Rx = np.array([[cos(ϕ / 2), -1j * sin(ϕ / 2)], [-1j * sin(ϕ / 2), cos(ϕ / 2)]])
         Ry = np.array([[cos(θ[1] / 2), -sin(θ[1] / 2)], [sin(θ[1] / 2), cos(θ[1] / 2)]])
         Rz = np.array(
-            [
-                [cos(θ[2] / 2) - 1j * sin(θ[2] / 2), 0],
-                [0, cos(θ[2] / 2) + 1j * sin(θ[2] / 2)],
-            ]
+            [[cos(θ[2] / 2) - 1j * sin(θ[2] / 2), 0], [0, cos(θ[2] / 2) + 1j * sin(θ[2] / 2)]]
         )
 
-        DRx = 0.5 * np.asarray(
-            [[-sin(ϕ / 2), -1j * cos(ϕ / 2)], [-1j * cos(ϕ / 2), -sin(ϕ / 2)]]
-        )
-        DRy = 0.5 * np.array(
-            [[-sin(θ[1] / 2), -cos(θ[1] / 2)], [cos(θ[1] / 2), -sin(θ[1] / 2)]]
-        )
+        DRx = 0.5 * np.asarray([[-sin(ϕ / 2), -1j * cos(ϕ / 2)], [-1j * cos(ϕ / 2), -sin(ϕ / 2)]])
+        DRy = 0.5 * np.array([[-sin(θ[1] / 2), -cos(θ[1] / 2)], [cos(θ[1] / 2), -sin(θ[1] / 2)]])
         DRz = 0.5 * np.array(
-            [
-                [-1j * cos(θ[2] / 2) - sin(θ[2] / 2), 0],
-                [0, 1j * cos(θ[2] / 2) - sin(θ[2] / 2)],
-            ]
+            [[-1j * cos(θ[2] / 2) - sin(θ[2] / 2), 0], [0, 1j * cos(θ[2] / 2) - sin(θ[2] / 2)]]
         )
 
         Dx = np.einsum("mn, np, pqg -> gmq", Rz, Ry, DRx)
@@ -137,124 +134,24 @@ class Cost:
         # D is shape (layers,4,x.size)
         D = D[:, :, :, 0, 0].swapaxes(0, 2)  # D is shape (x.size, 4, layers)
         # return (D.reshape(self.x_size, -1), U[:, 0, 0])
-        return D.reshape(self.x_size, -1), U[:, 0, 0] # D has shape (x, L*4)
+        return D.reshape(self.x_size, -1), U[:, 0, 0]  # D has shape (x, L*4)
 
     def _grad_prob_encoding(self, θ: np.ndarray, w: np.ndarray):
 
-        grad, enc = self._grad_amp_encoding(θ, w)
-        enc_conj_grad = np.einsum("g, gi -> gi", enc.conj(), grad)
-
-        return 2 * np.real(enc_conj_grad), enc
-        # return 2 * np.real(enc_conj_grad)
+        grad_amp, amp_enc = self._grad_amp_encoding(θ, w)
+        fn_approx = amp_enc.real**2 + amp_enc.imag**2
+        return 2 * np.real(np.einsum("g, gi -> gi", amp_enc.conj(), grad_amp)), fn_approx
 
     def grad_mse(self, θ: np.ndarray, w: np.ndarray):
 
-        if self.prob:
-            grad, fn_approx = self._grad_prob_encoding(θ, w)
-        else:
-            grad, fn_approx = self._grad_amp_encoding(θ, w)
-
+        grad, fn_approx = self.grad_encoding(θ, w)
         fn_diff = fn_approx - self.fn
 
-        return 2 * np.einsum("g, gi -> i", fn_diff, grad)
+        return 2 * np.real(np.einsum("g, gi -> i", fn_diff.conj(), grad)) / self.x_size
 
     def grad_rmse(self, θ: np.ndarray, w: np.ndarray):
 
-        if self.prob:
-            grad, fn_approx = self._grad_prob_encoding(θ, w)
-        else:
-            grad, fn_approx = self._grad_amp_encoding(θ, w)
-
+        grad, fn_approx = self.grad_encoding(θ, w)
         fn_diff = fn_approx - self.fn
-        return (
-            2
-            / (np.sqrt(self.x_size) * np.sqrt(np.sum(np.abs(fn_diff) ** 2) + 1e-9))
-            * grad
-        )
-
-    def grad(self, θ: np.ndarray, w: np.ndarray, return_cost=False):
-        """
-        Returns the gradient of the cost function with respect to each parameter. The derivative
-        depends on the encoding (probability/amplitude) and the cost function (MSE/RMSE).
-
-        Parameters
-        ----------
-        return_cost : bool
-            If True, return the gradient as well as the cost function.
-
-        """
-        layers = w.size
-        ders, U = self._der_amp_encoding(θ, w)
-
-        ders = ders.reshape(self.x_size, 4, layers).swapaxes(0, 2)
-
-        if self.prob:
-            E = (U * np.conj(U)).real - self.fn
-            if self.cost_fun == "MSE":
-                der_C = (
-                    4
-                    / self.x_size
-                    * np.array(
-                        [
-                            [
-                                np.dot(E.real, np.real(np.conj(U) * ders[i, j, :]))
-                                for i in range(layers)
-                            ]
-                            for j in range(4)
-                        ]
-                    )
-                )
-            else:
-                der_C = (
-                    2
-                    / (np.sqrt(self.x_size) * np.sqrt(np.sum(np.abs(E) ** 2) + 1e-9))
-                    * np.array(
-                        [
-                            [
-                                np.dot(E, np.real(np.conj(U) * ders[i, j, :]))
-                                for i in range(layers)
-                            ]
-                            for j in range(4)
-                        ]
-                    )
-                )
-        else:
-            E = U - self.fn  # error in approximation
-            if self.cost_fun == "MSE":
-                der_C = (
-                    2
-                    / self.x_size
-                    * np.array(
-                        [
-                            [
-                                np.real(np.dot(np.conj(E), ders[i, j, :]))
-                                for i in range(layers)
-                            ]
-                            for j in range(4)
-                        ]
-                    )
-                )
-            else:
-                der_C = (
-                    1
-                    / (np.sqrt(self.G) * np.sqrt(np.sum(np.abs(E) ** 2) + 1e-9))
-                    * np.array(
-                        [
-                            [
-                                np.real(np.dot(np.conj(E), ders[i, j, :]))
-                                for i in range(layers)
-                            ]
-                            for j in range(4)
-                        ]
-                    )
-                )
-        # devolvemos un array con la misma estructura que ϕ = [w, θ_0, θ_1, θ_2]
-        if return_cost:
-            if self.prob:
-                return der_C.flatten(), np.mean(
-                    (np.abs(U * np.conjugate(U)) - self.fn) ** 2
-                )
-            else:
-                return der_C.flatten(), np.mean(np.abs(U - self.fn) ** 2)
-        else:
-            return der_C.flatten()
+        coef = 1 / (np.sqrt(self.x_size) * np.sqrt(np.sum(np.abs(fn_diff) ** 2) + 1e-9))
+        return coef * np.real(np.einsum("g, gi -> i", fn_diff.conj(), grad))
