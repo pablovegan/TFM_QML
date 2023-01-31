@@ -2,7 +2,6 @@ import unittest
 
 import numpy as np
 from numpy.testing import assert_allclose
-from numpy.random import uniform, randint
 import pennylane as qml
 
 from cost import Cost
