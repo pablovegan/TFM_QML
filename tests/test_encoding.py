@@ -4,7 +4,7 @@ import numpy as np
 from numpy.testing import assert_allclose
 import pennylane as qml
 
-from cost import Cost
+from model import Model
 
 
 @qml.qnode(qml.device("default.qubit", wires=1))
@@ -31,7 +31,7 @@ class TestEncoding(unittest.TestCase):
             pennylane_list.append(circuit(x, self.θ, self.w)[0])
         pennylane_list = np.array(pennylane_list)
 
-        model = Cost(x=self.x, fn=0, encoding="amp")
+        model = Model(x=self.x, fn=0, encoding="amp")
         assert_allclose(
             model.encoding(self.θ, self.w),
             pennylane_list,

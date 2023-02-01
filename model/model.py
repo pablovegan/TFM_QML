@@ -6,7 +6,7 @@ import numpy as np
 from numpy import cos, sin
 
 
-class Cost:
+class Model:
     def __init__(self, x: np.ndarray, fn: np.ndarray, encoding: str):
         """
         Parameters
@@ -20,20 +20,15 @@ class Cost:
         self.x_size = x.size
         self.fn = fn
         if encoding == "prob":
-            self.prob = True  # TODO: quitar esto
             self.encoding = self._prob_encoding
             self.grad_encoding = self._grad_prob_encoding
         elif encoding == "amp":
-            self.prob = False
             self.encoding = self._amp_encoding
             self.grad_encoding = self._grad_amp_encoding
         else:
             raise ValueError("Invalid encoding '{encoding}'. Choose between 'prob' or 'amp'.")
 
-    def __call__(self, θ: np.ndarray, w: np.ndarray):
-        ...
-
-    def _layer(self, θ: np.ndarray, w: float) -> tuple:
+    def _layer(self, θ: np.ndarray, w: float) -> np.ndarray:
         """
         Each layer is the product of three rotations.
 
@@ -85,7 +80,7 @@ class Cost:
 
     @staticmethod
     def rmse_error(fn_exact: np.ndarray, fn_approx: np.ndarray) -> float:
-        return np.sqrt(Cost.mse_error(fn_exact, fn_approx))
+        return np.sqrt(Model.mse_error(fn_exact, fn_approx))
 
     def _der_layer(self, θ: np.ndarray, w: float) -> tuple:
         """Returns the derivative of one layer with respect to its 4 parameters."""
@@ -131,16 +126,20 @@ class Cost:
             # Multiply derivative times previous layer
             Ui = self._layer(θ[:, i], w[i])
             B = np.einsum("gin, gnj -> gij", B, Ui)
-        # D is shape (layers,4,x.size)
-        D = D[:, :, :, 0, 0].swapaxes(0, 2)  # D is shape (x.size, 4, layers)
-        # return (D.reshape(self.x_size, -1), U[:, 0, 0])
-        return D.reshape(self.x_size, -1), U[:, 0, 0]  # D has shape (x, L*4)
+
+        D = D[:, :, :, 0, 0]  # D is shape (layers,4,x.size)
+        D = D.swapaxes(0, 2)  # D is shape (x.size, 4, layers)
+        grad = D.reshape(self.x_size, -1)  # D has shape (x, L*4)
+        fn_approx = U[:, 0, 0]
+
+        return grad, fn_approx
 
     def _grad_prob_encoding(self, θ: np.ndarray, w: np.ndarray):
 
         grad_amp, amp_enc = self._grad_amp_encoding(θ, w)
         fn_approx = amp_enc.real**2 + amp_enc.imag**2
-        return 2 * np.real(np.einsum("g, gi -> gi", amp_enc.conj(), grad_amp)), fn_approx
+        grad_prob = 2 * np.real(np.einsum("g, gi -> gi", amp_enc.conj(), grad_amp))
+        return grad_prob, fn_approx
 
     def grad_mse(self, θ: np.ndarray, w: np.ndarray):
 

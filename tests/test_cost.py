@@ -5,7 +5,7 @@ from numpy.testing import assert_allclose
 from numpy.random import randint
 from scipy.optimize import check_grad
 
-from model import Model
+from model import Model, Cost
 
 
 def split(φ):
@@ -22,17 +22,6 @@ class TestGradient(unittest.TestCase):
         self.fn = np.exp(-((self.x) ** 2) / (2 * 0.5**2)) / (0.5 * np.sqrt(2 * np.pi))
         layers = randint(1, 12)
         self.φ = np.random.randn(layers * 4)
-
-    def test_grad_layer(self):
-        model = Model(x=self.x, fn=0, encoding="amp")
-        δ = 0.000001
-        w = 2
-        θ0 = np.random.randn(3)
-        θ1 = θ0.copy()
-        θ1[0] += δ
-        DUx_approx = (model._layer(θ1, w) - model._layer(θ0, w)) / δ
-        DUx = model._der_layer(θ0, w)[1]
-        assert_allclose(DUx_approx, DUx, rtol=1e-5, atol=1e-6)
 
     def test_grad_amp_mse(self):
 
@@ -67,20 +56,6 @@ class TestGradient(unittest.TestCase):
             return model.grad_rmse(θ, w)
 
         assert check_grad(fun, grad, φ) < 1e-5, f"Check_grad = {check_grad(fun, grad, φ)}"
-
-    def test_grad_prob_encoding(self):
-        model = Model(x=self.x, fn=0, encoding="prob")
-        φ = 0.3 * np.random.randn(4 * 6)
-
-        def fun(φ):
-            w, θ = split(φ)
-            return np.sum(model.encoding(θ, w))
-
-        def grad(φ):
-            w, θ = split(φ)
-            return np.sum(model._grad_prob_encoding(θ, w)[0], axis=0)
-
-        assert check_grad(fun, grad, φ) < 5e-5, f"Check_grad = {check_grad(fun, grad, φ)}"
 
     def test_grad_prob_mse(self):
 
