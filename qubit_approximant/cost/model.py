@@ -103,7 +103,7 @@ class Model:
         Dy = np.einsum("mn, np, pqg -> gmq", Rz, DRy, Rx)
         Dz = np.einsum("mn, np, pqg -> gmq", DRz, Ry, Rx)
 
-        return np.array([Dw, Dx, Dy, Dz])
+        return np.array([Dw, Dx, Dy, Dz])  # type: ignore
 
     def _grad_amp_encoding(self, θ: np.ndarray, w: np.ndarray):
         """ "Create recursively the derivatives with respect to each parameter of the entire net."""

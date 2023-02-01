@@ -5,7 +5,7 @@ from numpy.testing import assert_allclose
 from numpy.random import randint
 from scipy.optimize import check_grad
 
-from model import Model
+from qubit_approximant.cost import Model
 
 
 def split(φ):
