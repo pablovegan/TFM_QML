@@ -11,11 +11,7 @@ class Test_Functions(object):
         style.use(['seaborn-whitegrid'])
         self.function = getattr(self, function_type)
         if function == 'gaussian':
-<<<<<<< HEAD
             x = np.linspace(params['mean']-5*params['std'], params['mean']+5*params['std'], grid_size)
-=======
-            x = np.linspace(params['mean']-5 * params['std'], params['mean'] + 5 * params['std'], grid_size)
->>>>>>> 1c7525c63a0302989c280727ffb3e64d5640351d
         else:
             x = np.linspace(interval[0], interval[1], grid_size) 
 
@@ -66,9 +62,4 @@ def plot(x,f):
     plt.fill_between(x,f, alpha=0.4)
     plt.plot(x,f)
     plt.title(function)
-<<<<<<< HEAD
     plt.show()
-=======
-    plt.show()
-    
->>>>>>> 1c7525c63a0302989c280727ffb3e64d5640351d

@@ -76,9 +76,9 @@ class BlackBoxOptimizer(Optimizer):
 class GDOptimizer(Optimizer):
     """Gradient descent optimizer."""
 
-    __slots__ = "step_size", "iters", "iter_index", "__dict__"
+    __slots__ = "step_size", "iter_index", "__dict__"
 
-    def __init__(self, step_size: float, iters: int):
+    def __init__(self, iters: int, step_size: float):
 
         self.step_size = step_size
         self._iters = iters
@@ -143,7 +143,7 @@ class AdamOptimizer(GDOptimizer):
     __slots__ = "alpha", "beta1", "beta2", "eps"
 
     def __init__(
-        self, alpha: float = 0.01, beta1: float = 0.9, beta2: float = 0.999, eps: float = 1e-8
+        self, iters: int, step_size: float = 0.01, beta1: float = 0.9, beta2: float = 0.999, eps: float = 1e-8
     ):
         """
         Parameters
@@ -157,11 +157,12 @@ class AdamOptimizer(GDOptimizer):
         eps: float
             regularizing small parameter used to avoid division by zero
         """
-        self.alpha = alpha
+        self.step_size = step_size
         self.beta1 = beta1
         self.beta2 = beta2
         self.eps = eps
-
+        super().__init__(iters, step_size)
+        
     def step(self, grad_cost: Callable, params: ndarray) -> ndarray:
         """Update the parameters with a step of Adam. Adam changes the step size in each iteration."""
         m = zeros_like(params)
@@ -172,6 +173,6 @@ class AdamOptimizer(GDOptimizer):
         v = self.beta2 * v + (1.0 - self.beta2) * grad**2
         mhat = m / (1.0 - self.beta1 ** (super().iter_index + 1))
         vhat = v / (1.0 - self.beta2 ** (super().iter_index + 1))
-        params = params - self.alpha * mhat / (sqrt(vhat) + self.eps)
+        params = params - self.step_size * mhat / (sqrt(vhat) + self.eps)
 
         return params

@@ -20,13 +20,8 @@ class QML_model(object):
     ----------
     [1] Adrián Pérez Salinas et al, "Data re-uploading for a universal
         quantum classifier Quantum" 4, 226 (2020)
-<<<<<<< HEAD
 
     """
-=======
-    """
-    
->>>>>>> 1c7525c63a0302989c280727ffb3e64d5640351d
     def __init__(self,
                 function_type: str = 'gaussian',
                 f_params: dict = {'mean': 0.0, 'std': 2, 'coef': 1},
@@ -35,11 +30,7 @@ class QML_model(object):
                 probability = None):
         function = getattr(Test_Functions, function_type)
         self.x = x
-<<<<<<< HEAD
         self.G = 1 if type(x) is float else x.size
-=======
-        self.G = 1 if isinstance(x) is float else x.size
->>>>>>> 1c7525c63a0302989c280727ffb3e64d5640351d
         self.f = f
         self.cost_fun = cost_fun
 
@@ -50,11 +41,7 @@ class QML_model(object):
 
         if probability is None:
             self.probability = (f >= 0).all()
-<<<<<<< HEAD
         elif type(probability) is not bool:
-=======
-        elif isinstance(probability) is not bool:
->>>>>>> 1c7525c63a0302989c280727ffb3e64d5640351d
             raise TypeError('Probability must be boolean.')
         else:
             self.probability = probability
