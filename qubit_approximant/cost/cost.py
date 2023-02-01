@@ -15,12 +15,12 @@ class Cost:
 
     def __call__(self, params) -> float:
         w, θ = Cost.split(params)
-        fn_apprx = self.model.encoding(θ, w)
+        fn_apprx = self.model(θ, w)
         return self.metric(fn_apprx - self.fn)
 
     def grad(self, params) -> np.ndarray:
         w, θ = Cost.split(params)
-        grad_fn, fn_approx = self.model.grad_encoding(θ, w)
+        grad_fn, fn_approx = self.model.grad(θ, w)
         return self.metric.grad(fn_approx - self.fn, grad_fn)
 
     @staticmethod

@@ -6,8 +6,8 @@ from scipy.optimize import check_grad
 from qubit_approximant import Model, Metric, Cost
 
 
-class TestCost(unittest.TestCase):
-    """Testing our modules."""
+class TestOptimizer(unittest.TestCase):
+    """Testing our optimizer."""
 
     def setUp(self) -> None:
         self.x = np.linspace(-2, 2, 100)

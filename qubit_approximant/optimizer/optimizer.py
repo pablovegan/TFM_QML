@@ -143,7 +143,12 @@ class AdamOptimizer(GDOptimizer):
     __slots__ = "alpha", "beta1", "beta2", "eps"
 
     def __init__(
-        self, iters: int, step_size: float = 0.01, beta1: float = 0.9, beta2: float = 0.999, eps: float = 1e-8
+        self,
+        iters: int,
+        step_size: float = 0.01,
+        beta1: float = 0.9,
+        beta2: float = 0.999,
+        eps: float = 1e-8,
     ):
         """
         Parameters
@@ -162,7 +167,7 @@ class AdamOptimizer(GDOptimizer):
         self.beta2 = beta2
         self.eps = eps
         super().__init__(iters, step_size)
-        
+
     def step(self, grad_cost: Callable, params: ndarray) -> ndarray:
         """Update the parameters with a step of Adam. Adam changes the step size in each iteration."""
         m = zeros_like(params)

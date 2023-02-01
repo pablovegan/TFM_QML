@@ -3,32 +3,63 @@ Module docstrings
 """
 
 import numpy as np
-from numpy import cos, sin
+from numpy import cos, sin, ndarray
 
 
 class Model:
-    def __init__(self, x: np.ndarray, fn: np.ndarray, encoding: str):
+    """
+    Quantum circuit that encodes our function. The circuit consists of 
+    a number of layers,
+
+    U = Ln * ... * L1
+
+    each of which is made of three rotations dependent
+    on four parameters:
+
+    L = RX(x * w + θ0) RY(θ1) RZ(θ2)
+    """
+
+    __slots__ = "x", "encoding", "grad"
+
+    def __init__(self, x: ndarray, encoding: str):
         """
         Parameters
         ----------
-        layers: int
-            The number of layers in our circuit.
+        x: ndarray
+            The values where we wish to approximate a function.
         encoding: str
             Choose between amplitude or probability encoding.
+            Must be either 'amp' or 'prob'.
         """
         self.x = x
-        self.x_size = x.size
-        self.fn = fn
         if encoding == "prob":
             self.encoding = self._prob_encoding
-            self.grad_encoding = self._grad_prob_encoding
+            self.grad = self._grad_prob
         elif encoding == "amp":
             self.encoding = self._amp_encoding
-            self.grad_encoding = self._grad_amp_encoding
+            self.grad = self._grad_amp
         else:
             raise ValueError("Invalid encoding '{encoding}'. Choose between 'prob' or 'amp'.")
 
-    def _layer(self, θ: np.ndarray, w: float) -> np.ndarray:
+    def __call__(self, θ: ndarray, w: ndarray):
+        """
+        Each layer is the product of three rotations.
+
+        Parmeters
+        ---------
+        θ : (3, layers) ndarray
+            Bias parameters of each rotation.
+        w : (layers) ndarray
+            Weights of the RsX rotation.
+
+        Returns
+        -------
+        (x.size) ndarray
+            Values of the function encoded in our qubit.
+        """
+        return self.encoding(θ, w)
+
+    def _layer(self, θ: ndarray, w: float) -> ndarray:
         """
         Each layer is the product of three rotations.
 
@@ -53,36 +84,20 @@ class Model:
         # move the x axis to first position
         return np.einsum("mn, np, pqg -> gmq", Rz, Ry, Rx)
 
-    def _amp_encoding(self, θ: np.ndarray, w: np.ndarray) -> np.ndarray:
-        """
-        Returns our variational ansatz, the product of the L layers.
-        Since we are interested in the amplitude/probability of the |0> qubit
-        we select the (0,0) element of the unitary matrix U (for every x).
-        """
+    def _amp_encoding(self, θ: ndarray, w: ndarray) -> ndarray:
+        """Returns approximate function encoded in the amplitude of the qubit."""
         U = self._layer(θ[:, 0], w[0])[:, :, 0]
         for i in range(1, w.size):
             Ui = self._layer(θ[:, i], w[i])
             U = np.einsum("gmn, gn -> gm", Ui, U)
         return U[:, 0]
 
-    def _prob_encoding(self, θ: np.ndarray, w: np.ndarray) -> np.ndarray:
-        """
-        Returns our variational ansatz, the product of the L layers.
-        Since we are interested in the amplitude/probability of the |0> qubit
-        we select the (0,0) element of the unitary matrix U (for every x).
-        """
+    def _prob_encoding(self, θ: ndarray, w: ndarray) -> ndarray:
+        """Returns approximate function encoded in the probability of the qubit."""
         fn_amp = self._amp_encoding(θ, w)
         return fn_amp.real**2 + fn_amp.imag**2
 
-    @staticmethod
-    def mse_error(fn_exact: np.ndarray, fn_approx: np.ndarray) -> float:
-        return np.mean(np.absolute(fn_exact - fn_approx) ** 2)
-
-    @staticmethod
-    def rmse_error(fn_exact: np.ndarray, fn_approx: np.ndarray) -> float:
-        return np.sqrt(Model.mse_error(fn_exact, fn_approx))
-
-    def _der_layer(self, θ: np.ndarray, w: float) -> tuple:
+    def _grad_layer(self, θ: ndarray, w: float) -> ndarray:
         """Returns the derivative of one layer with respect to its 4 parameters."""
         ϕ = w * self.x + θ[0]
 
@@ -105,15 +120,14 @@ class Model:
 
         return np.array([Dw, Dx, Dy, Dz])  # type: ignore
 
-    def _grad_amp_encoding(self, θ: np.ndarray, w: np.ndarray):
-        """ "Create recursively the derivatives with respect to each parameter of the entire net."""
-
+    def _grad_amp(self, θ: ndarray, w: ndarray) -> tuple[ndarray, ndarray]:
+        """Returns the gradient of the amplitude encoding and the encoded function."""
         layers = w.size
-        U = np.tensordot(np.ones(self.x_size), np.identity(2), axes=0)  # dim (G,2,2)
-        D = np.zeros((layers, 4, self.x_size, 2, 2), dtype=np.complex128)
+        U = np.tensordot(np.ones(self.x.size), np.identity(2), axes=0)  # dim (G,2,2)
+        D = np.zeros((layers, 4, self.x.size, 2, 2), dtype=np.complex128)
 
         for i in range(layers):
-            DUi = self._der_layer(θ[:, i], w[i])  # dim (4,G,2,2)
+            DUi = self._grad_layer(θ[:, i], w[i])  # dim (4,G,2,2)
             # j is each of the derivatives
             D[i, ...] = np.einsum("jgmn, gnp -> jgmp", DUi, U)
             # Multiply derivative times next layer
@@ -129,28 +143,14 @@ class Model:
 
         D = D[:, :, :, 0, 0]  # D is shape (layers,4,x.size)
         D = D.swapaxes(0, 2)  # D is shape (x.size, 4, layers)
-        grad = D.reshape(self.x_size, -1)  # D has shape (x, L*4)
+        grad = D.reshape(self.x.size, -1)  # D has shape (x, L*4)
         fn_approx = U[:, 0, 0]
 
         return grad, fn_approx
 
-    def _grad_prob_encoding(self, θ: np.ndarray, w: np.ndarray):
-
-        grad_amp, amp_enc = self._grad_amp_encoding(θ, w)
-        fn_approx = amp_enc.real**2 + amp_enc.imag**2
-        grad_prob = 2 * np.real(np.einsum("g, gi -> gi", amp_enc.conj(), grad_amp))
+    def _grad_prob(self, θ: ndarray, w: ndarray) -> tuple[ndarray, ndarray]:
+        """Returns the gradient of the probability encoding and the encoded function."""
+        grad_amp, amp = self._grad_amp(θ, w)
+        fn_approx = amp.real**2 + amp.imag**2
+        grad_prob = 2 * np.real(np.einsum("g, gi -> gi", amp.conj(), grad_amp))
         return grad_prob, fn_approx
-
-    def grad_mse(self, θ: np.ndarray, w: np.ndarray):
-
-        grad, fn_approx = self.grad_encoding(θ, w)
-        fn_diff = fn_approx - self.fn
-
-        return 2 * np.real(np.einsum("g, gi -> i", fn_diff.conj(), grad)) / self.x_size
-
-    def grad_rmse(self, θ: np.ndarray, w: np.ndarray):
-
-        grad, fn_approx = self.grad_encoding(θ, w)
-        fn_diff = fn_approx - self.fn
-        coef = 1 / (np.sqrt(self.x_size) * np.sqrt(np.sum(np.abs(fn_diff) ** 2) + 1e-9))
-        return coef * np.real(np.einsum("g, gi -> i", fn_diff.conj(), grad))

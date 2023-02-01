@@ -8,11 +8,6 @@ from scipy.optimize import check_grad
 from qubit_approximant import Model
 
 
-def split(φ):
-    layers = φ.size // 4
-    return φ[0:layers], φ[layers:].reshape(3, layers)
-
-
 @qml.qnode(qml.device("default.qubit", wires=1))
 def circuit(x, θ, w) -> np.ndarray:
     for i in range(w.size):
@@ -22,7 +17,7 @@ def circuit(x, θ, w) -> np.ndarray:
     return qml.state()
 
 
-class TestEncoding(unittest.TestCase):
+class TestModel(unittest.TestCase):
     """Testing our modules."""
 
     def setUp(self) -> None:
@@ -31,20 +26,15 @@ class TestEncoding(unittest.TestCase):
         self.θ = np.random.randn(3 * layers).reshape(3, layers)
         self.w = np.random.randn(layers)
 
-        # self.x = np.array([2])
-        self.fn = np.exp(-((self.x) ** 2) / (2 * 0.5**2)) / (0.5 * np.sqrt(2 * np.pi))
-        layers = np.random.randint(1, 12)
-        self.φ = np.random.randn(layers * 4)
-
     def test_encoding(self):
         pennylane_list = []
         for x in self.x:
             pennylane_list.append(circuit(x, self.θ, self.w)[0])
         pennylane_list = np.array(pennylane_list)
 
-        model = Model(x=self.x, fn=0, encoding="amp")
+        model = Model(x=self.x, encoding="amp")
         assert_allclose(
-            model.encoding(self.θ, self.w),
+            model(self.θ, self.w),
             pennylane_list,
             rtol=1e-6,
             atol=1e-7,
@@ -52,27 +42,31 @@ class TestEncoding(unittest.TestCase):
         )
 
     def test_grad_layer(self):
-        model = Model(x=self.x, fn=0, encoding="amp")
+        model = Model(x=self.x, encoding="amp")
         δ = 0.000001
         w = 2
         θ0 = np.random.randn(3)
         θ1 = θ0.copy()
         θ1[0] += δ
         DUx_approx = (model._layer(θ1, w) - model._layer(θ0, w)) / δ
-        DUx = model._der_layer(θ0, w)[1]
+        DUx = model._grad_layer(θ0, w)[1]
         assert_allclose(DUx_approx, DUx, rtol=1e-5, atol=1e-6)
 
     def test_grad_prob_encoding(self):
-        model = Model(x=self.x, fn=0, encoding="prob")
+        model = Model(x=self.x, encoding="prob")
         φ = 0.3 * np.random.randn(4 * 6)
+
+        def split(φ):
+            layers = φ.size // 4
+            return φ[0:layers], φ[layers:].reshape(3, layers)
 
         def fun(φ):
             w, θ = split(φ)
-            return np.sum(model.encoding(θ, w))
+            return np.sum(model(θ, w))
 
         def grad(φ):
             w, θ = split(φ)
-            return np.sum(model._grad_prob_encoding(θ, w)[0], axis=0)
+            return np.sum(model._grad_prob(θ, w)[0], axis=0)
 
         assert check_grad(fun, grad, φ) < 5e-5, f"Check_grad = {check_grad(fun, grad, φ)}"
 
