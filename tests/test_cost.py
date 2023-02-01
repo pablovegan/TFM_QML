@@ -17,7 +17,7 @@ class TestCost(unittest.TestCase):
 
     def test_grad_amp_mse(self):
 
-        model = Model(x=self.x, fn=self.fn, encoding="amp")
+        model = Model(x=self.x, encoding="amp")
         metric = Metric("MSE")
         cost = Cost(self.fn, model, metric)
 
@@ -26,7 +26,7 @@ class TestCost(unittest.TestCase):
 
     def test_grad_amp_rmse(self):
 
-        model = Model(x=self.x, fn=self.fn, encoding="amp")
+        model = Model(x=self.x, encoding="amp")
         metric = Metric("RMSE")
         cost = Cost(self.fn, model, metric)
 
@@ -35,7 +35,7 @@ class TestCost(unittest.TestCase):
 
     def test_grad_prob_mse(self):
 
-        model = Model(x=self.x, fn=self.fn, encoding="prob")
+        model = Model(x=self.x, encoding="prob")
         metric = Metric("MSE")
         cost = Cost(self.fn, model, metric)
 
@@ -44,7 +44,7 @@ class TestCost(unittest.TestCase):
 
     def test_grad_prob_rmse(self):
 
-        model = Model(x=self.x, fn=self.fn, encoding="prob")
+        model = Model(x=self.x, encoding="prob")
         metric = Metric("RMSE")
         cost = Cost(self.fn, model, metric)
 
