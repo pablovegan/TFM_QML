@@ -23,8 +23,8 @@ class TestModel(unittest.TestCase):
     def setUp(self) -> None:
         self.x = np.linspace(-2, 2, 100)
         layers = np.random.randint(1, 12)
-        self.θ = np.random.randn(3 * layers).reshape(3, layers)
-        self.w = np.random.randn(layers)
+        self.params = 0.3 * np.random.randn(4 * layers)
+        self.w, self.θ = self.params[0:layers], self.params[layers:].reshape(3, layers)
 
     def test_encoding(self):
         pennylane_list = []
@@ -34,7 +34,7 @@ class TestModel(unittest.TestCase):
 
         model = Model(x=self.x, encoding="amp")
         assert_allclose(
-            model(self.θ, self.w),
+            model(self.params),
             pennylane_list,
             rtol=1e-6,
             atol=1e-7,
@@ -54,21 +54,14 @@ class TestModel(unittest.TestCase):
 
     def test_grad_prob_encoding(self):
         model = Model(x=self.x, encoding="prob")
-        φ = 0.3 * np.random.randn(4 * 6)
 
-        def split(φ):
-            layers = φ.size // 4
-            return φ[0:layers], φ[layers:].reshape(3, layers)
+        def fun(params):
+            return np.sum(model(params))
 
-        def fun(φ):
-            w, θ = split(φ)
-            return np.sum(model(θ, w))
+        def grad(params):
+            return np.sum(model._grad_prob(params)[0], axis=0)
 
-        def grad(φ):
-            w, θ = split(φ)
-            return np.sum(model._grad_prob(θ, w)[0], axis=0)
-
-        assert check_grad(fun, grad, φ) < 5e-5, f"Check_grad = {check_grad(fun, grad, φ)}"
+        assert check_grad(fun, grad, self.params) < 5e-5, f"Check_grad = {check_grad(fun, grad, self.params)}"
 
 
 if __name__ == "__main__":

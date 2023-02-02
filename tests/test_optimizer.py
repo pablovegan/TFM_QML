@@ -1,9 +1,8 @@
 import unittest
 
 import numpy as np
-from scipy.optimize import check_grad
 
-from qubit_approximant import Model, Metric, Cost
+from qubit_approximant import Model, Cost, Metric, BlackBoxOptimizer, AdamOptimizer
 
 
 class TestOptimizer(unittest.TestCase):
@@ -12,44 +11,27 @@ class TestOptimizer(unittest.TestCase):
     def setUp(self) -> None:
         self.x = np.linspace(-2, 2, 100)
         self.fn = np.exp(-((self.x) ** 2) / (2 * 0.5**2)) / (0.5 * np.sqrt(2 * np.pi))
-        np.random.seed(2)
-        self.φ = 0.3 * np.random.randn(4 * 6)
+        layers = 8
+        np.random.seed(20)
+        self.params = 0.7 * np.random.randn(4 * layers)
 
-    def test_grad_amp_mse(self):
-
-        model = Model(x=self.x, fn=self.fn, encoding="amp")
-        metric = Metric("MSE")
+    def test_blackbox(self):
+        model = Model(x=self.x, encoding="prob")
+        metric = Metric("mse")
         cost = Cost(self.fn, model, metric)
+        opt = BlackBoxOptimizer(method="L-BFGS-B")
+        params = opt(cost, cost.grad, self.params)
+        fn_approx = model(params)
+        assert metric(fn_approx - self.fn) < 1e-5
 
-        assert check_grad(cost, cost.grad, self.φ) < 1e-5, (
-            f"Check_grad = {check_grad(cost, cost.grad, self.φ)}")
-
-    def test_grad_amp_rmse(self):
-
-        model = Model(x=self.x, fn=self.fn, encoding="amp")
-        metric = Metric("RMSE")
+    def test_adam(self):
+        model = Model(x=self.x, encoding="prob")
+        metric = Metric("mse")
         cost = Cost(self.fn, model, metric)
-
-        assert check_grad(cost, cost.grad, self.φ) < 1e-5, (
-            f"Check_grad = {check_grad(cost, cost.grad, self.φ)}")
-
-    def test_grad_prob_mse(self):
-
-        model = Model(x=self.x, fn=self.fn, encoding="prob")
-        metric = Metric("MSE")
-        cost = Cost(self.fn, model, metric)
-
-        assert check_grad(cost, cost.grad, self.φ) < 1e-5, (
-            f"Check_grad = {check_grad(cost, cost.grad, self.φ)}")
-
-    def test_grad_prob_rmse(self):
-
-        model = Model(x=self.x, fn=self.fn, encoding="prob")
-        metric = Metric("RMSE")
-        cost = Cost(self.fn, model, metric)
-
-        assert check_grad(cost, cost.grad, self.φ) < 1e-5, (
-            f"Check_grad = {check_grad(cost, cost.grad, self.φ)}")
+        opt = AdamOptimizer(5000)
+        params = opt(cost, cost.grad, self.params)
+        fn_approx = model(params)
+        assert metric(fn_approx - self.fn) < 1e-2  # Adam optimizer is not working very good :(
 
 
 if __name__ == "__main__":

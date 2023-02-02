@@ -6,9 +6,16 @@ import numpy as np
 from numpy import cos, sin, ndarray
 
 
+def split(params: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """Split the parameters into"""
+    assert params.size % 4 == 0, "Error: number of parameters must equal 4 * layers."
+    layers = params.size // 4
+    return params[0:layers], params[layers:].reshape(3, layers)
+
+
 class Model:
     """
-    Quantum circuit that encodes our function. The circuit consists of 
+    Quantum circuit that encodes our function. The circuit consists of
     a number of layers,
 
     U = Ln * ... * L1
@@ -41,7 +48,7 @@ class Model:
         else:
             raise ValueError("Invalid encoding '{encoding}'. Choose between 'prob' or 'amp'.")
 
-    def __call__(self, θ: ndarray, w: ndarray):
+    def __call__(self, params: ndarray):
         """
         Each layer is the product of three rotations.
 
@@ -57,6 +64,7 @@ class Model:
         (x.size) ndarray
             Values of the function encoded in our qubit.
         """
+        w, θ = split(params)
         return self.encoding(θ, w)
 
     def _layer(self, θ: ndarray, w: float) -> ndarray:
@@ -120,8 +128,9 @@ class Model:
 
         return np.array([Dw, Dx, Dy, Dz])  # type: ignore
 
-    def _grad_amp(self, θ: ndarray, w: ndarray) -> tuple[ndarray, ndarray]:
+    def _grad_amp(self, params: ndarray) -> tuple[ndarray, ndarray]:
         """Returns the gradient of the amplitude encoding and the encoded function."""
+        w, θ = split(params)
         layers = w.size
         U = np.tensordot(np.ones(self.x.size), np.identity(2), axes=0)  # dim (G,2,2)
         D = np.zeros((layers, 4, self.x.size, 2, 2), dtype=np.complex128)
@@ -148,9 +157,9 @@ class Model:
 
         return grad, fn_approx
 
-    def _grad_prob(self, θ: ndarray, w: ndarray) -> tuple[ndarray, ndarray]:
+    def _grad_prob(self, params: ndarray) -> tuple[ndarray, ndarray]:
         """Returns the gradient of the probability encoding and the encoded function."""
-        grad_amp, amp = self._grad_amp(θ, w)
+        grad_amp, amp = self._grad_amp(params)
         fn_approx = amp.real**2 + amp.imag**2
         grad_prob = 2 * np.real(np.einsum("g, gi -> gi", amp.conj(), grad_amp))
         return grad_prob, fn_approx

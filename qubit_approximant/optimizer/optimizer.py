@@ -37,7 +37,7 @@ class BlackBoxOptimizer(Optimizer):
 
     blackbox_methods = ["CG", "L-BFGS-B", "COBYLA", "SLSQP"]
 
-    def __init__(self, method: str, method_kwargs: dict):
+    def __init__(self, method: str, method_kwargs: dict = {}):
         """
         Initialize a black box optimizer.
 
@@ -92,7 +92,7 @@ class GDOptimizer(Optimizer):
         """In case we want to update the number of iterations."""
         self._iters = new_iters
 
-    def __call__(self, cost: Callable, grad_cost: Callable, init_params: ndarray) -> ndarray:
+    def __call__(self, cost: Callable, grad_cost: Callable, params: ndarray) -> ndarray:
         """
         Calculate the optimized parameters using a number of gradient descent iterations.
 
@@ -100,17 +100,23 @@ class GDOptimizer(Optimizer):
         ----------
         cost_fn: Callable
             Cost function to be minimized.
-        init_params: ndarray
+        params: ndarray
             Initial parameter guess for the cost function; used to initialize the optimizer.
         iter: int
             Number of iterations of gradient descent to perform.
         """
-        self.iter_index = 0
-        params = init_params
+        min_cost = 100000
+        min_params = zeros_like(params)
 
-        for _ in range(self.iters):
+        for i in range(self.iters):
+            self.iter_index = i
             params = self.step(grad_cost, params)
-        return params
+
+            if (c := cost(params)) < min_cost:
+                self.min_cost = c
+                min_params = params
+
+        return min_params
 
     def step(self, grad_cost: Callable, params: ndarray) -> ndarray:
         """Update the parameters with a step of Gradient Descent."""
@@ -176,8 +182,8 @@ class AdamOptimizer(GDOptimizer):
 
         m = self.beta1 * m + (1.0 - self.beta1) * grad
         v = self.beta2 * v + (1.0 - self.beta2) * grad**2
-        mhat = m / (1.0 - self.beta1 ** (super().iter_index + 1))
-        vhat = v / (1.0 - self.beta2 ** (super().iter_index + 1))
+        mhat = m / (1.0 - self.beta1 ** (self.iter_index + 1))
+        vhat = v / (1.0 - self.beta2 ** (self.iter_index + 1))
         params = params - self.step_size * mhat / (sqrt(vhat) + self.eps)
 
         return params

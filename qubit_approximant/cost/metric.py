@@ -5,10 +5,10 @@ import numpy as np
 
 class Metric:
     def __init__(self, metric: str):
-        if metric == "MSE":
+        if metric == "mse":
             self.metric = Metric.mse
             self.grad = Metric.grad_mse
-        elif metric == "RMSE":
+        elif metric == "rmse":
             self.metric = Metric.rmse
             self.grad = Metric.grad_rmse
         else:

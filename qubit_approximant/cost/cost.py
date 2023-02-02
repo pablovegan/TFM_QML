@@ -14,16 +14,9 @@ class Cost:
         self.fn = fn
 
     def __call__(self, params) -> float:
-        w, θ = Cost.split(params)
-        fn_apprx = self.model(θ, w)
+        fn_apprx = self.model(params)
         return self.metric(fn_apprx - self.fn)
 
     def grad(self, params) -> np.ndarray:
-        w, θ = Cost.split(params)
-        grad_fn, fn_approx = self.model.grad(θ, w)
+        grad_fn, fn_approx = self.model.grad(params)
         return self.metric.grad(fn_approx - self.fn, grad_fn)
-
-    @staticmethod
-    def split(params: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
-        layers = params.size // 4
-        return params[0:layers], params[layers:].reshape(3, layers)
