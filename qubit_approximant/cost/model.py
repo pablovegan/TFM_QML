@@ -3,10 +3,12 @@ Module docstrings
 """
 
 import numpy as np
-from numpy import cos, sin, ndarray
+from numpy import ndarray
+
+from ._gates import RX, RY, RZ, grad_RX, grad_RY, grad_RZ
 
 
-def split(params: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+def split(params: ndarray) -> tuple[ndarray, ndarray]:
     """Split the parameters into"""
     assert params.size % 4 == 0, "Error: number of parameters must equal 4 * layers."
     layers = params.size // 4
@@ -83,14 +85,8 @@ class Model:
         A : (G,2,2) array
             Unitary matrix of the layer.
         """
-        ϕ = w * self.x + θ[0]
-        Rx = np.array([[cos(ϕ / 2), -1j * sin(ϕ / 2)], [-1j * sin(ϕ / 2), cos(ϕ / 2)]])
-        Ry = np.array([[cos(θ[1] / 2), -sin(θ[1] / 2)], [sin(θ[1] / 2), cos(θ[1] / 2)]])
-        Rz = np.array(
-            [[cos(θ[2] / 2) - 1j * sin(θ[2] / 2), 0], [0, cos(θ[2] / 2) + 1j * sin(θ[2] / 2)]]
-        )
         # move the x axis to first position
-        return np.einsum("mn, np, pqg -> gmq", Rz, Ry, Rx)
+        return np.einsum("mn, np, pqg -> gmq", RZ(θ[2]), RY(θ[1]), RX(w * self.x + θ[0]))
 
     def _amp_encoding(self, θ: ndarray, w: ndarray) -> ndarray:
         """Returns approximate function encoded in the amplitude of the qubit."""
@@ -107,24 +103,10 @@ class Model:
 
     def _grad_layer(self, θ: ndarray, w: float) -> ndarray:
         """Returns the derivative of one layer with respect to its 4 parameters."""
-        ϕ = w * self.x + θ[0]
-
-        Rx = np.array([[cos(ϕ / 2), -1j * sin(ϕ / 2)], [-1j * sin(ϕ / 2), cos(ϕ / 2)]])
-        Ry = np.array([[cos(θ[1] / 2), -sin(θ[1] / 2)], [sin(θ[1] / 2), cos(θ[1] / 2)]])
-        Rz = np.array(
-            [[cos(θ[2] / 2) - 1j * sin(θ[2] / 2), 0], [0, cos(θ[2] / 2) + 1j * sin(θ[2] / 2)]]
-        )
-
-        DRx = 0.5 * np.asarray([[-sin(ϕ / 2), -1j * cos(ϕ / 2)], [-1j * cos(ϕ / 2), -sin(ϕ / 2)]])
-        DRy = 0.5 * np.array([[-sin(θ[1] / 2), -cos(θ[1] / 2)], [cos(θ[1] / 2), -sin(θ[1] / 2)]])
-        DRz = 0.5 * np.array(
-            [[-1j * cos(θ[2] / 2) - sin(θ[2] / 2), 0], [0, 1j * cos(θ[2] / 2) - sin(θ[2] / 2)]]
-        )
-
-        Dx = np.einsum("mn, np, pqg -> gmq", Rz, Ry, DRx)
+        Dx = np.einsum("mn, np, pqg -> gmq", RZ(θ[2]), RY(θ[1]), grad_RX(w * self.x + θ[0]))
         Dw = np.einsum("gmq, g -> gmq", Dx, self.x)
-        Dy = np.einsum("mn, np, pqg -> gmq", Rz, DRy, Rx)
-        Dz = np.einsum("mn, np, pqg -> gmq", DRz, Ry, Rx)
+        Dy = np.einsum("mn, np, pqg -> gmq", RZ(θ[2]), grad_RY(θ[1]), RX(w * self.x + θ[0]))
+        Dz = np.einsum("mn, np, pqg -> gmq", grad_RZ(θ[2]), RY(θ[1]), RX(w * self.x + θ[0]))
 
         return np.array([Dw, Dx, Dy, Dz])  # type: ignore
 
@@ -132,28 +114,30 @@ class Model:
         """Returns the gradient of the amplitude encoding and the encoded function."""
         w, θ = split(params)
         layers = w.size
-        U = np.tensordot(np.ones(self.x.size), np.identity(2), axes=0)  # dim (G,2,2)
-        D = np.zeros((layers, 4, self.x.size, 2, 2), dtype=np.complex128)
+        U = np.tensordot(np.ones(self.x.size), np.array([1, 0]), axes=0)  # dim (G,2)
+        D = np.zeros((layers, 4, self.x.size, 2), dtype=np.complex128)
 
         for i in range(layers):
-            DUi = self._grad_layer(θ[:, i], w[i])  # dim (4,G,2,2)
+            DUi = self._grad_layer(θ[:, i], w[i])  # dim (4,G,2)
             # j is each of the derivatives
-            D[i, ...] = np.einsum("jgmn, gnp -> jgmp", DUi, U)
+            D[i, ...] = np.einsum("jgmn, gn -> jgm", DUi, U)
             # Multiply derivative times next layer
             Ui = self._layer(θ[:, i], w[i])
-            U = np.einsum("gmn, gnp -> gmp", Ui, U)
+            U = np.einsum("gmn, gn -> gm", Ui, U)
+
+        grad = np.zeros((layers, 4, self.x.size), dtype=np.complex128)
+        grad[layers - 1] = D[layers - 1, :, :, 0]
         # In the first iteration we reuse the L-th layer
-        B = Ui
+        B = Ui[:, 0, :]
         for i in range(layers - 2, -1, -1):
-            D[i, ...] = np.einsum("gmn, jgnp -> jgmp", B, D[i, ...])
+            grad[i, ...] = np.einsum("gm, jgm -> jg", B, D[i, ...])
             # Multiply derivative times previous layer
             Ui = self._layer(θ[:, i], w[i])
-            B = np.einsum("gin, gnj -> gij", B, Ui)
+            B = np.einsum("gn, gnm -> gm", B, Ui)
 
-        D = D[:, :, :, 0, 0]  # D is shape (layers,4,x.size)
-        D = D.swapaxes(0, 2)  # D is shape (x.size, 4, layers)
-        grad = D.reshape(self.x.size, -1)  # D has shape (x, L*4)
-        fn_approx = U[:, 0, 0]
+        grad = grad.swapaxes(0, 2)  # D is shape (x.size, 4, layers)
+        grad = grad.reshape(self.x.size, -1)  # D has shape (x, L*4)
+        fn_approx = U[:, 0]
 
         return grad, fn_approx
 
