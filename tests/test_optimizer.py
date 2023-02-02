@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from qubit_approximant import Model, Cost, Metric, BlackBoxOptimizer, AdamOptimizer
+from qubit_approximant import RotationsModel, Cost, Metric, BlackBoxOptimizer, AdamOptimizer
 
 
 class TestOptimizer(unittest.TestCase):
@@ -16,7 +16,7 @@ class TestOptimizer(unittest.TestCase):
         self.params = 0.7 * np.random.randn(4 * layers)
 
     def test_blackbox(self):
-        model = Model(x=self.x, encoding="prob")
+        model = RotationsModel(x=self.x, encoding="prob")
         metric = Metric("mse")
         cost = Cost(self.fn, model, metric)
         opt = BlackBoxOptimizer(method="L-BFGS-B")
@@ -25,7 +25,7 @@ class TestOptimizer(unittest.TestCase):
         assert metric(fn_approx - self.fn) < 1e-5
 
     def test_adam(self):
-        model = Model(x=self.x, encoding="prob")
+        model = RotationsModel(x=self.x, encoding="prob")
         metric = Metric("mse")
         cost = Cost(self.fn, model, metric)
         opt = AdamOptimizer(5000)

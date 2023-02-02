@@ -2,7 +2,8 @@
 
 import numpy as np
 
-from ..cost import Model, Metric
+from qubit_approximant.model import Model
+from .metric import Metric
 
 
 class Cost:

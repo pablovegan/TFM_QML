@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 from scipy.optimize import check_grad
 
-from qubit_approximant import Model, Metric, Cost
+from qubit_approximant import RotationsModel, Metric, Cost
 
 
 class TestCost(unittest.TestCase):
@@ -17,7 +17,7 @@ class TestCost(unittest.TestCase):
 
     def test_grad_amp_mse(self):
 
-        model = Model(x=self.x, encoding="amp")
+        model = RotationsModel(x=self.x, encoding="amp")
         metric = Metric("mse")
         cost = Cost(self.fn, model, metric)
 
@@ -26,7 +26,7 @@ class TestCost(unittest.TestCase):
 
     def test_grad_amp_rmse(self):
 
-        model = Model(x=self.x, encoding="amp")
+        model = RotationsModel(x=self.x, encoding="amp")
         metric = Metric("rmse")
         cost = Cost(self.fn, model, metric)
 
@@ -35,7 +35,7 @@ class TestCost(unittest.TestCase):
 
     def test_grad_prob_mse(self):
 
-        model = Model(x=self.x, encoding="prob")
+        model = RotationsModel(x=self.x, encoding="prob")
         metric = Metric("mse")
         cost = Cost(self.fn, model, metric)
 
@@ -44,7 +44,7 @@ class TestCost(unittest.TestCase):
 
     def test_grad_prob_rmse(self):
 
-        model = Model(x=self.x, encoding="prob")
+        model = RotationsModel(x=self.x, encoding="prob")
         metric = Metric("rmse")
         cost = Cost(self.fn, model, metric)
 
