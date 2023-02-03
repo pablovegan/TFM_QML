@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 from scipy.optimize import check_grad
 
-from qubit_approximant import RotationsModel, Metric, Cost
+from qubit_approximant import RotationsModel, Cost
 
 
 class TestCost(unittest.TestCase):
@@ -18,8 +18,7 @@ class TestCost(unittest.TestCase):
     def test_grad_amp_mse(self):
 
         model = RotationsModel(x=self.x, encoding="amp")
-        metric = Metric("mse")
-        cost = Cost(self.fn, model, metric)
+        cost = Cost(self.fn, model, metric="mse")
 
         assert check_grad(cost, cost.grad, self.φ) < 1e-5, (
             f"Check_grad = {check_grad(cost, cost.grad, self.φ)}")
@@ -27,8 +26,15 @@ class TestCost(unittest.TestCase):
     def test_grad_amp_rmse(self):
 
         model = RotationsModel(x=self.x, encoding="amp")
-        metric = Metric("rmse")
-        cost = Cost(self.fn, model, metric)
+        cost = Cost(self.fn, model, metric="rmse")
+
+        assert check_grad(cost, cost.grad, self.φ) < 1e-5, (
+            f"Check_grad = {check_grad(cost, cost.grad, self.φ)}")
+
+    def test_grad_amp_mse_weighted(self):
+
+        model = RotationsModel(x=self.x, encoding="amp")
+        cost = Cost(self.fn, model, metric="mse_weighted")
 
         assert check_grad(cost, cost.grad, self.φ) < 1e-5, (
             f"Check_grad = {check_grad(cost, cost.grad, self.φ)}")
@@ -36,8 +42,7 @@ class TestCost(unittest.TestCase):
     def test_grad_prob_mse(self):
 
         model = RotationsModel(x=self.x, encoding="prob")
-        metric = Metric("mse")
-        cost = Cost(self.fn, model, metric)
+        cost = Cost(self.fn, model, metric="mse")
 
         assert check_grad(cost, cost.grad, self.φ) < 1e-5, (
             f"Check_grad = {check_grad(cost, cost.grad, self.φ)}")
@@ -45,8 +50,15 @@ class TestCost(unittest.TestCase):
     def test_grad_prob_rmse(self):
 
         model = RotationsModel(x=self.x, encoding="prob")
-        metric = Metric("rmse")
-        cost = Cost(self.fn, model, metric)
+        cost = Cost(self.fn, model, metric="rmse")
+
+        assert check_grad(cost, cost.grad, self.φ) < 1e-5, (
+            f"Check_grad = {check_grad(cost, cost.grad, self.φ)}")  
+
+    def test_grad_prob_mse_weighted(self):
+
+        model = RotationsModel(x=self.x, encoding="prob")
+        cost = Cost(self.fn, model, metric="mse_weighted")
 
         assert check_grad(cost, cost.grad, self.φ) < 1e-5, (
             f"Check_grad = {check_grad(cost, cost.grad, self.φ)}")
