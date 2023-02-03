@@ -67,7 +67,7 @@ class BlackBoxOptimizer(Optimizer):
             The keyword arguments are passed to `scipy.optimize.minimize().`
         """
         result = minimize(
-            cost, init_params, method=self.method, jac=grad_cost, **self.method_kwargs
+            cost, init_params, method=self.method, jac=grad_cost, options=self.method_kwargs
         )
         params = result.x
         return params

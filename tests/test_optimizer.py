@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from qubit_approximant import RotationsModel, Cost, Metric, BlackBoxOptimizer, AdamOptimizer
+from qubit_approximant import RotationsModel, Cost, BlackBoxOptimizer, AdamOptimizer
 
 
 class TestOptimizer(unittest.TestCase):
@@ -17,21 +17,17 @@ class TestOptimizer(unittest.TestCase):
 
     def test_blackbox(self):
         model = RotationsModel(x=self.x, encoding="prob")
-        metric = Metric("mse")
-        cost = Cost(self.fn, model, metric)
+        cost = Cost(self.fn, model, metric="mse")
         opt = BlackBoxOptimizer(method="L-BFGS-B")
         params = opt(cost, cost.grad, self.params)
-        fn_approx = model(params)
-        assert metric(fn_approx - self.fn) < 1e-5
+        assert cost(params) < 1e-5
 
     def test_adam(self):
         model = RotationsModel(x=self.x, encoding="prob")
-        metric = Metric("mse")
-        cost = Cost(self.fn, model, metric)
+        cost = Cost(self.fn, model, metric="mse")
         opt = AdamOptimizer(5000)
         params = opt(cost, cost.grad, self.params)
-        fn_approx = model(params)
-        assert metric(fn_approx - self.fn) < 1e-2  # Adam optimizer is not working very good :(
+        assert cost(params) < 1e-2  # Adam optimizer is not working very good :(
 
 
 if __name__ == "__main__":

@@ -135,7 +135,7 @@ class Model(ABC):
 class RotationsModel(Model):
     """
     Each layer of the circuit is made of three rotations dependent
-    on four parameters:
+    on 4 parameters:
 
     L = RX(x * w + θ0) RY(θ1) RZ(θ2)
     """
@@ -192,7 +192,7 @@ class RotationsModel(Model):
 class RyModel(Model):
     """
     Each layer of the circuit is made of three rotations dependent
-    on four parameters:
+    on 2 parameters:
 
     L = RY(x * w + θ0)
     """
@@ -213,7 +213,7 @@ class RyModel(Model):
 
     def split(self, params: ndarray) -> tuple[ndarray, ndarray]:
         """Split the parameters into"""
-        assert params.size % 2 == 0, "Error: number of parameters must equal 4 * layers."
+        assert params.size % 2 == 0, "Error: number of parameters must equal 2 * layers."
         layers = params.size // 2
         return params[0:layers], params[layers:].reshape(1, layers)
 
@@ -237,8 +237,64 @@ class RyModel(Model):
         return np.einsum("mng -> gmn", RY(w * self.x + θ[0]))
 
     def _grad_layer(self, θ: ndarray, w: float) -> ndarray:
-        """Returns the derivative of one layer with respect to its 4 parameters."""
+        """Returns the derivative of one layer with respect to its 2 parameters."""
         Dy = np.einsum("mng -> gmn", grad_RY(w * self.x + θ[0]))
         Dw = np.einsum("gmn, g -> gmn", Dy, self.x)
 
         return np.array([Dw, Dy])  # type: ignore
+
+
+class RxRyModel(Model):
+    """
+    Each layer of the circuit is made of three rotations dependent
+    on 3 parameters:
+
+    L = RX(θ0) RY(w * self.x + θ1)
+    """
+
+    __slots__ = "x", "encoding", "grad"
+
+    def __init__(self, x: ndarray, encoding: str):
+        """
+        Parameters
+        ----------
+        x: ndarray
+            The values where we wish to approximate a function.
+        encoding: str
+            Choose between amplitude or probability encoding.
+            Must be either 'amp' or 'prob'.
+        """
+        super().__init__(x, encoding)
+
+    def split(self, params: ndarray) -> tuple[ndarray, ndarray]:
+        """Split the parameters into"""
+        assert params.size % 3 == 0, "Error: number of parameters must equal 3 * layers."
+        layers = params.size // 3
+        return params[0:layers], params[layers:].reshape(2, layers)
+
+    def _layer(self, θ: ndarray, w: float) -> ndarray:
+        """
+        Each layer is the product of three rotations.
+
+        Parmeters
+        ---------
+        θ : (3) array
+            Bias parameters of each rotation.
+        w : float
+            Weight of the X rotation.
+
+        Returns
+        -------
+        A : (G,2,2) array
+            Unitary matrix of the layer.
+        """
+        # move the x axis to first position
+        return np.einsum("mng, np -> gmp", RY(w * self.x + θ[1]), RX(θ[0]))
+
+    def _grad_layer(self, θ: ndarray, w: float) -> ndarray:
+        """Returns the derivative of one layer with respect to its 3 parameters."""
+        Dx = np.einsum("mng, np -> gmp", RY(w * self.x + θ[1]), grad_RX(θ[0]))
+        Dy = np.einsum("mng, np -> gmp", grad_RY(w * self.x + θ[1]), RX(θ[0]))
+        Dw = np.einsum("gmn, g -> gmn", Dy, self.x)
+
+        return np.array([Dw, Dx, Dy])  # type: ignore
