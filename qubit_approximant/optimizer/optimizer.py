@@ -1,6 +1,4 @@
-"""
-Module docstrings
-"""
+"""Optimizers for our model."""
 
 from abc import ABC, abstractmethod
 from typing import Callable

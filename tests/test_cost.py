@@ -62,6 +62,22 @@ class TestCost(unittest.TestCase):
 
         assert check_grad(cost, cost.grad, self.φ) < 1e-5, (
             f"Check_grad = {check_grad(cost, cost.grad, self.φ)}")
+        
+    def test_grad_prob_log_cosh(self):
+
+        model = RotationsModel(x=self.x, encoding="prob")
+        cost = Cost(self.fn, model, metric="log_cosh")
+
+        assert check_grad(cost, cost.grad, self.φ) < 1e-5, (
+            f"Check_grad = {check_grad(cost, cost.grad, self.φ)}")
+        
+    def test_grad_prob_kl_divergence(self):
+
+        model = RotationsModel(x=self.x, encoding="prob")
+        cost = Cost(self.fn, model, metric="kl_divergence")
+
+        assert check_grad(cost, cost.grad, self.φ) < 1e-5, (
+            f"Check_grad = {check_grad(cost, cost.grad, self.φ)}")
 
 
 if __name__ == "__main__":
