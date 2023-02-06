@@ -6,7 +6,7 @@ import numpy as np
 from numpy import pi
 import matplotlib.style as style
 import matplotlib.pyplot as plt
-from scipy.optimize import minimize, check_grad
+from scipy.optimize import minimize
 import scipy.integrate as integrate
 
 # from qiskit.algorithms.optimizers import SPSA

@@ -46,6 +46,15 @@ class Model(ABC):
         else:
             raise ValueError("Invalid encoding '{encoding}'. Choose between 'prob' or 'amp'.")
 
+    @property
+    def x(self):
+        return self._x
+
+    @x.setter
+    def x(self, new_x):
+        """Change x doing object.x = new_x"""
+        self._x = new_x
+
     def __call__(self, params: ndarray):
         """
         Each layer is the product of three rotations.

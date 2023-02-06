@@ -1,3 +1,3 @@
-from .optimizer import GDOptimizer, AdamOptimizer, BlackBoxOptimizer
+from .optimizer import Optimizer, GDOptimizer, AdamOptimizer, BlackBoxOptimizer
 
-__all__ = ["GDOptimizer", "AdamOptimizer", "BlackBoxOptimizer"]
+__all__ = ["Optimizer", "GDOptimizer", "AdamOptimizer", "BlackBoxOptimizer"]
