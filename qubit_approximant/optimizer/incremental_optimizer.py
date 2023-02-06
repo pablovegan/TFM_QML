@@ -77,12 +77,19 @@ class IncrementalOptimizer:
         std_diff = []
         
         if self.new_layer_position == "final":
-            for i in range(self.min_layer + 1, self.max_layer):
-                diff_params = self.params_list[i * self.params_per_layer, (i + 1) * self.params_per_layer]
+            for i in range(self.min_layer, self.max_layer - 1):
+                params0 = self.params_list[i]
+                params1 = self.params_list[i + 1][0: i * self.params_per_layer]
+                params_diff = params1 - params0
+                mean_diff.append(np.mean(np.abs(params_diff)))
+                std_diff.append(np.std(np.abs(params_diff)))
+                
         elif self.new_layer_position == "initial":
-            diff_params = 
-
-            mean_diff[i - 1] = np.mean(np.abs(diff_params))
-            std_diff[i - 1] = np.std(np.abs(diff_params))
+            for i in range(self.min_layer, self.max_layer - 1):
+                params0 = self.params_list[i]
+                params1 = self.params_list[i + 1][self.params_per_layer: i * self.params_per_layer]
+                params_diff = params1 - params0
+                mean_diff.append(np.mean(np.abs(params_diff)))
+                std_diff.append(np.std(np.abs(params_diff)))
         else:
-            raise ValueError(f"Parameter difference only supported for new initial and final layers.")
+            raise ValueError("Parameter difference only supported for new initial and final layers.")
