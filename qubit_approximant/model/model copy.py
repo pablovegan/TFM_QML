@@ -76,9 +76,9 @@ class Model(ABC):
 
     def _amp_encoding(self, θ: ndarray, w: ndarray) -> ndarray:
         """Returns approximate function encoded in the amplitude of the qubit."""
-        U = self._layer(θ[0, :], w[0])[:, :, 0]
+        U = self._layer(θ[:, 0], w[0])[:, :, 0]
         for i in range(1, w.size):
-            Ui = self._layer(θ[i, :], w[i])
+            Ui = self._layer(θ[:, i], w[i])
             U = np.einsum("gmn, gn -> gm", Ui, U)
         return U[:, 0]
 
@@ -95,17 +95,17 @@ class Model(ABC):
     def _grad_amp(self, params: ndarray) -> tuple[ndarray, ndarray]:
         """Returns the gradient of the amplitude encoding and the encoded function."""
         w, θ = self.split(params)
-        layer_params = 1 + θ.shape[1]
+        layer_params = 1 + θ.shape[0]
         layers = w.size
         U = np.tensordot(np.ones(self.x.size), np.array([1, 0]), axes=0)  # dim (G,2)
         D = np.zeros((layers, layer_params, self.x.size, 2), dtype=np.complex128)
 
         for i in range(layers):
-            DUi = self._grad_layer(θ[i, :], w[i])  # dim (4,G,2)
+            DUi = self._grad_layer(θ[:, i], w[i])  # dim (4,G,2)
             # j is each of the derivatives
             D[i, ...] = np.einsum("jgmn, gn -> jgm", DUi, U)
             # Multiply derivative times next layer
-            Ui = self._layer(θ[i, :], w[i])
+            Ui = self._layer(θ[:, i], w[i])
             U = np.einsum("gmn, gn -> gm", Ui, U)
 
         grad = np.zeros((layers, layer_params, self.x.size), dtype=np.complex128)
@@ -115,10 +115,10 @@ class Model(ABC):
         for i in range(layers - 2, -1, -1):
             grad[i, ...] = np.einsum("gm, jgm -> jg", B, D[i, ...])
             # Multiply derivative times previous layer
-            Ui = self._layer(θ[i, :], w[i])
+            Ui = self._layer(θ[:, i], w[i])
             B = np.einsum("gn, gnm -> gm", B, Ui)
 
-        grad = np.einsum("ijg -> gij", grad)
+        grad = grad.swapaxes(0, 2)  # D is shape (x.size, 4, layers)
         grad = grad.reshape(self.x.size, -1)  # D has shape (x, L*4)
         fn_approx = U[:, 0]
 
@@ -158,8 +158,7 @@ class RotationsModel(Model):
         """Split the parameters into"""
         assert params.size % 4 == 0, "Error: number of parameters must equal 4 * layers."
         layers = params.size // 4
-        params = params.reshape(layers, 4)
-        return params[:, 0].reshape(-1), params[:, 1:4]
+        return params[0:layers], params[layers:].reshape(3, layers)
 
     def _layer(self, θ: ndarray, w: float) -> ndarray:
         """
@@ -216,8 +215,7 @@ class RyModel(Model):
         """Split the parameters into"""
         assert params.size % 2 == 0, "Error: number of parameters must equal 2 * layers."
         layers = params.size // 2
-        params = params.reshape(layers, 2)
-        return params[:, 0].reshape(-1), params[:, 1:2]
+        return params[0:layers], params[layers:].reshape(1, layers)
 
     def _layer(self, θ: ndarray, w: float) -> ndarray:
         """
@@ -272,8 +270,7 @@ class RxRyModel(Model):
         """Split the parameters into"""
         assert params.size % 3 == 0, "Error: number of parameters must equal 3 * layers."
         layers = params.size // 3
-        params = params.reshape(layers, 3)
-        return params[:, 0].reshape(-1), params[:, 1:3]
+        return params[0:layers], params[layers:].reshape(2, layers)
 
     def _layer(self, θ: ndarray, w: float) -> ndarray:
         """

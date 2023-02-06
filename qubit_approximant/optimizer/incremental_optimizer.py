@@ -41,41 +41,48 @@ class IncrementalOptimizer:
         else:
             raise ValueError(f"Optimization {method} is not supported.")
         
-    def __call__(self, cost: Callable, grad_cost: Callable, init_params: np.ndarray) -> list[np.ndarray]:
+    def __call__(self, cost: Callable, grad_cost: Callable, init_params: np.ndarray, new_layer_coef: float = 0.3) -> list[np.ndarray]:
         
         self.params_per_layer = init_params // self.min_layer
         params = init_params
-        params_list = []
+        self.params_list = []
         
-        for _ in range(self.min_layer, self.max_layer + 1):
+        for layer in range(self.min_layer, self.max_layer + 1):
             params = self.optimizer(cost, grad_cost, params)
-            params_list.append(params)
-            
-        return params_list
+            self.params_list.append(params)
+            params = self._new_initial_params(params, layer, new_layer_coef)
+        return self.params_list
     
-    def _new_initial_params(params: np.ndarray) -> np.ndarray:
+    def _new_initial_params(self, params: np.ndarray, current_layer: int, new_layer_coef: float) -> np.ndarray:
         """Create new initial parameters from the optimized parameters
         with one layer less."""
-        
 
         if self.new_layer_position == "final":
-            i = layer
+            layer = current_layer
         elif self.new_layer_position == "middle":
-            i = min_layers + (layer - min_layers) // 2
+            layer = self.min_layer + (current_layer - self.min_layer) // 2
         elif self.new_layer_position == "initial":
-            i = 0
+            layer = 0
         elif self.new_layer_position == "random":
-            i = np.random.randint(0, high=layer + 1, dtype=int)
+            layer = np.random.randint(0, high=current_layer + 1, dtype=int)
             
-        # Añadimos la nueva capa con valores cercanos a 0
         new_layer_val = new_layer_coef * np.random.randn(4)
-        # new_layer_val = 0.3/(i+1) * np.random.randn(4)
-        φ = np.insert(
-            φ, i, new_layer_val[0]
-        )  # phi [w1, ...wn, theta1, theta2, theta3]
-        φ = np.insert(φ, i + 1 + layer, new_layer_val[1])
-        φ = np.insert(φ, i + 2 + 2 * layer, new_layer_val[2])
-        φ = np.insert(φ, i + 3 + 3 * layer, new_layer_val[3])
+        params = np.insert(params, layer, new_layer_val)  # [w1, ...wn, theta1, theta2, theta3]
+        
+        return params
+    
+    def inital_params_diff(self):
+        
+        mean_diff = []
+        std_diff = []
+        
+        if self.new_layer_position == "final":
+            for i in range(self.min_layer + 1, self.max_layer):
+                diff_params = self.params_list[i * self.params_per_layer, (i + 1) * self.params_per_layer]
+        elif self.new_layer_position == "initial":
+            diff_params = 
+
+            mean_diff[i - 1] = np.mean(np.abs(diff_params))
+            std_diff[i - 1] = np.std(np.abs(diff_params))
         else:
-            φ = cc * np.random.randn(layer + 1 + 3 * layer + 3)
-        # print('Los parámetros con capa añadida son {φ}.\n'.format(φ=φ))
+            raise ValueError(f"Parameter difference only supported for new initial and final layers.")

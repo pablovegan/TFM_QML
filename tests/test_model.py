@@ -11,9 +11,9 @@ from qubit_approximant import RotationsModel, RyModel, RxRyModel
 @qml.qnode(qml.device("default.qubit", wires=1))
 def circuit(x, θ, w) -> np.ndarray:
     for i in range(w.size):
-        qml.RX(x * w[i] + θ[0, i], wires=0)
-        qml.RY(θ[1, i], wires=0)
-        qml.RZ(θ[2, i], wires=0)
+        qml.RX(x * w[i] + θ[i, 0], wires=0)
+        qml.RY(θ[i, 1], wires=0)
+        qml.RZ(θ[i, 2], wires=0)
     return qml.state()
 
 
@@ -23,8 +23,9 @@ class TestRotationsModel(unittest.TestCase):
     def setUp(self) -> None:
         self.x = np.linspace(-2, 2, 100)
         layers = np.random.randint(1, 12)
-        self.params = 0.3 * np.random.randn(4 * layers)
-        self.w, self.θ = self.params[0:layers], self.params[layers:].reshape(3, layers)
+        self.params = np.random.randn(4 * layers)
+        self.w = np.random.randn(layers)
+        self.θ = np.random.randn(3 * layers).reshape(layers, 3)
 
     def test_encoding(self):
         pennylane_list = []
