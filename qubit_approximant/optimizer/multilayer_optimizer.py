@@ -1,18 +1,64 @@
 """Incremental optimizer"""
 
 from typing import Callable
+from abc import ABC, abstractmethod
 
 import numpy as np
 
-from .multilayer_optimizer import MultilayerOptimizer
+from qubit_approximant.optimizer import Optimizer
 
 
-class IncrementalOptimizer(MultilayerOptimizer):
+class MultilayerOptimizer(ABC):
     """This optimizer uses the parameters of an optimized L layer model
     as input for the optimization of a L+1 layer model."""
 
+    blackbox_methods = ["CG", "L-BFGS-B", "COBYLA", "SLSQP"]
+    layer_positions = ["initial", "middle", "final", "random"]
+
+    def __init__(self, min_layer, max_layer, optimizer: Optimizer, new_layer_position: str,
+                 new_layer_coef: float = 0.3):
+        """
+        Initialize a black box optimizer.
+
+        Parameters
+        ----------
+        method: str
+            The desired optimization method.
+        """
+        self.min_layer = min_layer
+        self.max_layer = max_layer
+
+        self.optimizer = optimizer
+
+        if new_layer_position in MultilayerOptimizer.layer_positions:
+            self.new_layer_position = new_layer_position
+        else:
+            raise ValueError(
+                f"new_layer_position = {new_layer_position} is not supported. "
+                "Try 'initial', 'middle', 'final' or 'random'"
+            )
+
+        self.new_layer_coef = new_layer_coef
+
+    @abstractmethod
+    def __call__(
+        self,
+        cost: Callable,
+        grad_cost: Callable,
+        init_params: np.ndarray,
+    ) -> list[np.ndarray]:
+        ...
+
+
+class NonIncrementalOptimizer(MultilayerOptimizer):
+    """This optimizer uses the parameters of an optimized L layer model
+    as input for the optimization of a L+1 layer model."""
+
+    blackbox_methods = ["CG", "L-BFGS-B", "COBYLA", "SLSQP"]
+    layer_positions = ["initial", "middle", "final", "random"]
+
     def __init__(
-        self, min_layer, max_layer, new_layer_position: str, method: str, method_kwargs: dict = {}
+        self, min_layer, max_layer, optimizer: Optimizer, new_layer_position: str, new_layer_coef: float = 0.3
     ):
         """
         Initialize a black box optimizer.
@@ -22,7 +68,42 @@ class IncrementalOptimizer(MultilayerOptimizer):
         method: str
             The desired optimization method.
         """
-        super().__init__(min_layer, max_layer, new_layer_position, method, method_kwargs)
+        super().__init__(min_layer, max_layer, optimizer, new_layer_position, new_layer_coef)
+
+    def __call__(
+        self,
+        cost: Callable,
+        grad_cost: Callable,
+        init_params: np.ndarray,
+    ) -> list[np.ndarray]:
+
+        self.params_per_layer = init_params // self.min_layer
+        params = init_params
+        self.params_list = []
+
+        for layer in range(self.min_layer, self.max_layer + 1):
+            params = self.optimizer(cost, grad_cost, params)
+            self.params_list.append(params)
+            params = self.new_layer_coef * np.random.randn((layer + 1) * self.params_per_layer)
+        return self.params_list
+
+
+class IncrementalOptimizer(MultilayerOptimizer):
+    """This optimizer uses the parameters of an optimized L layer model
+    as input for the optimization of a L+1 layer model."""
+
+    def __init__(
+        self, min_layer, max_layer, optimizer: Optimizer, new_layer_position: str, new_layer_coef: float = 0.3
+    ):
+        """
+        Initialize a black box optimizer.
+
+        Parameters
+        ----------
+        method: str
+            The desired optimization method.
+        """
+        super().__init__(min_layer, max_layer, optimizer, new_layer_position, new_layer_coef)
 
     def __call__(
         self,
@@ -58,7 +139,7 @@ class IncrementalOptimizer(MultilayerOptimizer):
             layer = np.random.randint(0, high=current_layer + 1, dtype=int)
 
         new_layer_val = new_layer_coef * np.random.randn(4)
-        params = np.insert(params, layer, new_layer_val)  # [w1, ...wn, theta1, theta2, theta3]
+        params = np.insert(params, layer, new_layer_val)
 
         return params
 

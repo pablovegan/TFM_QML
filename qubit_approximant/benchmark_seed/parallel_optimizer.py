@@ -3,11 +3,9 @@ import numpy as np
 from pathos.multiprocessing import ProcessingPool, cpu_count
 from mpi4py import MPI
 import dill
-from multiprocessing import Pool, cpu_count
 
 from qubit_approximant import Cost, Model, MultilayerOptimizer
 from qubit_approximant.benchmark_metric import l2_norm, l1_norm, inf_norm, infidelity
-
 
 
 def benchmark_seed(seeds, x, cost: Cost, optimizer: MultilayerOptimizer):
