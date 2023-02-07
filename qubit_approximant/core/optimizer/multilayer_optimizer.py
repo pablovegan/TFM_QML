@@ -15,8 +15,14 @@ class MultilayerOptimizer(ABC):
     blackbox_methods = ["CG", "L-BFGS-B", "COBYLA", "SLSQP"]
     layer_positions = ["initial", "middle", "final", "random"]
 
-    def __init__(self, min_layer, max_layer, optimizer: Optimizer, new_layer_position: str,
-                 new_layer_coef: float = 0.3):
+    def __init__(
+        self,
+        min_layer,
+        max_layer,
+        optimizer: Optimizer,
+        new_layer_position: str,
+        new_layer_coef: float = 0.3,
+    ):
         """
         Initialize a black box optimizer.
 
@@ -42,10 +48,7 @@ class MultilayerOptimizer(ABC):
 
     @abstractmethod
     def __call__(
-        self,
-        cost: Callable,
-        grad_cost: Callable,
-        init_params: np.ndarray,
+        self, cost: Callable, grad_cost: Callable, init_params: np.ndarray
     ) -> list[np.ndarray]:
         ...
 
@@ -58,7 +61,12 @@ class NonIncrementalOptimizer(MultilayerOptimizer):
     layer_positions = ["initial", "middle", "final", "random"]
 
     def __init__(
-        self, min_layer, max_layer, optimizer: Optimizer, new_layer_position: str, new_layer_coef: float = 0.3
+        self,
+        min_layer,
+        max_layer,
+        optimizer: Optimizer,
+        new_layer_position: str,
+        new_layer_coef: float = 0.3,
     ):
         """
         Initialize a black box optimizer.
@@ -71,10 +79,7 @@ class NonIncrementalOptimizer(MultilayerOptimizer):
         super().__init__(min_layer, max_layer, optimizer, new_layer_position, new_layer_coef)
 
     def __call__(
-        self,
-        cost: Callable,
-        grad_cost: Callable,
-        init_params: np.ndarray,
+        self, cost: Callable, grad_cost: Callable, init_params: np.ndarray
     ) -> list[np.ndarray]:
 
         self.params_per_layer = init_params // self.min_layer
@@ -93,7 +98,12 @@ class IncrementalOptimizer(MultilayerOptimizer):
     as input for the optimization of a L+1 layer model."""
 
     def __init__(
-        self, min_layer, max_layer, optimizer: Optimizer, new_layer_position: str, new_layer_coef: float = 0.3
+        self,
+        min_layer,
+        max_layer,
+        optimizer: Optimizer,
+        new_layer_position: str,
+        new_layer_coef: float = 0.3,
     ):
         """
         Initialize a black box optimizer.
@@ -151,7 +161,7 @@ class IncrementalOptimizer(MultilayerOptimizer):
         if self.new_layer_position == "final":
             for i in range(self.min_layer, self.max_layer - 1):
                 params0 = self.params_list[i]
-                params1 = self.params_list[i + 1][0: i * self.params_per_layer]
+                params1 = self.params_list[i + 1][0 : i * self.params_per_layer]
                 params_diff = params1 - params0
                 mean_diff.append(np.mean(np.abs(params_diff)))
                 std_diff.append(np.std(np.abs(params_diff)))
@@ -159,7 +169,7 @@ class IncrementalOptimizer(MultilayerOptimizer):
         elif self.new_layer_position == "initial":
             for i in range(self.min_layer, self.max_layer - 1):
                 params0 = self.params_list[i]
-                params1 = self.params_list[i + 1][self.params_per_layer: i * self.params_per_layer]
+                params1 = self.params_list[i + 1][self.params_per_layer : i * self.params_per_layer]
                 params_diff = params1 - params0
                 mean_diff.append(np.mean(np.abs(params_diff)))
                 std_diff.append(np.std(np.abs(params_diff)))

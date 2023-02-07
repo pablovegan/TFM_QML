@@ -5,7 +5,7 @@ import scipy.integrate as integrate
 
 
 def l1_norm(fn: Callable, fn_approx: Callable, x_limits: tuple[float, float]) -> float:
-    diff_l1 = lambda x: np.abs(fn(x) - fn_approx(x)) # noqa
+    diff_l1 = lambda x: np.abs(fn(x) - fn_approx(x))  # noqa
     return integrate.quad(diff_l1, x_limits[0], x_limits[1], limit=300)[0]
 
 

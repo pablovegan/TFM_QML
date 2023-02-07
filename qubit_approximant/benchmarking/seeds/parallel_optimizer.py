@@ -16,9 +16,7 @@ def benchmark_seed(seeds, x, cost: Cost, optimizer: MultilayerOptimizer):
     rank = comm.Get_rank()
     seeds_node = seeds // nodes
 
-    seed_array = np.random.choice(
-        range(rank * 2000, (rank + 1) * 2000), seeds_node, replace=False
-    )
+    seed_array = np.random.choice(range(rank * 2000, (rank + 1) * 2000), seeds_node, replace=False)
 
     # Computación multiprocesador
     with ProcessingPool(cpu_count()) as p:
@@ -55,7 +53,6 @@ def benchmark_seed(seeds, x, cost: Cost, optimizer: MultilayerOptimizer):
             ),
             seed_array,
         )
-
 
 
 def mean_seed_errores_parallel(

@@ -18,9 +18,13 @@ def mse_weighted(fn: np.ndarray, fn_approx: np.ndarray) -> float:
     return np.mean(fn * np.absolute(fn_diff) ** 2)
 
 
-def grad_mse_weighted(fn: np.ndarray, fn_approx: np.ndarray, grad_fn_approx: np.ndarray) -> np.ndarray:
+def grad_mse_weighted(
+    fn: np.ndarray, fn_approx: np.ndarray, grad_fn_approx: np.ndarray
+) -> np.ndarray:
     fn_diff = fn_approx - fn
-    return 2 * np.real(np.einsum("g, g, gi -> i", fn, fn_diff.conj(), grad_fn_approx)) / fn.size  # fn is real!!
+    return (
+        2 * np.real(np.einsum("g, g, gi -> i", fn, fn_diff.conj(), grad_fn_approx)) / fn.size
+    )  # fn is real!!
 
 
 def rmse(fn: np.ndarray, fn_approx: np.ndarray) -> float:
@@ -37,8 +41,10 @@ def kl_divergence(fn: np.ndarray, fn_approx: np.ndarray) -> float:
     return np.mean(fn * np.log(fn_approx / fn))
 
 
-def grad_kl_divergence(fn: np.ndarray, fn_approx: np.ndarray, grad_fn_approx: np.ndarray) -> np.ndarray:
-    return np.real(np.einsum("g, gi -> i", fn/fn_approx, grad_fn_approx)) / fn.size
+def grad_kl_divergence(
+    fn: np.ndarray, fn_approx: np.ndarray, grad_fn_approx: np.ndarray
+) -> np.ndarray:
+    return np.real(np.einsum("g, gi -> i", fn / fn_approx, grad_fn_approx)) / fn.size
 
 
 def log_cosh(fn: np.ndarray, fn_approx: np.ndarray) -> float:

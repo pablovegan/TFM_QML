@@ -1,7 +1,6 @@
 {
     "python.linting.mypyEnabled": true,
     "python.linting.enabled": true,
-    "python.formatting.blackPath": "/Users/macvp/miniconda3/bin/black",
     "python.testing.unittestArgs": [
         "-v",
         "-s",
@@ -11,6 +10,6 @@
     ],
     "python.testing.pytestEnabled": false,
     "python.testing.unittestEnabled": true,
-    "python.formatting.provider": "black",
+    "python.formatting.blackPath": "/Users/macvp/miniconda3/bin/black",
     "editor.formatOnSave": true,
 }

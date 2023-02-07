@@ -3,11 +3,11 @@
 from numpy import ndarray
 
 from qubit_approximant.model import Model
-from._cost_metrics import *  # noqa
+from ._cost_metrics import *  # noqa
 
 
 class Cost:
-    '''Create a cost function from the encoding and the metric.'''
+    """Create a cost function from the encoding and the metric."""
 
     def __init__(self, fn: ndarray, model: Model, metric: str):
         try:
