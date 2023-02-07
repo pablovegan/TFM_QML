@@ -13,7 +13,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 from numpy import ndarray
 
-from ._gates import RX, RY, RZ, grad_RX, grad_RY, grad_RZ
+from ._gates_and_grads import RX, RY, RZ, grad_RX, grad_RY, grad_RZ
 
 
 class Model(ABC):
@@ -24,7 +24,7 @@ class Model(ABC):
     U = Ln * ... * L1
     """
 
-    __slots__ = "x", "encoding", "grad"
+    __slots__ = "encoding", "grad", "__dict__"
 
     def __init__(self, x: ndarray, encoding: str):
         """
@@ -149,8 +149,6 @@ class RotationsModel(Model):
     L = RX(x * w + θ0) RY(θ1) RZ(θ2)
     """
 
-    __slots__ = "x", "encoding", "grad"
-
     def __init__(self, x: ndarray, encoding: str):
         """
         Parameters
@@ -207,8 +205,6 @@ class RyModel(Model):
     L = RY(x * w + θ0)
     """
 
-    __slots__ = "x", "encoding", "grad"
-
     def __init__(self, x: ndarray, encoding: str):
         """
         Parameters
@@ -263,8 +259,6 @@ class RxRyModel(Model):
     L = RX(θ0) RY(w * self.x + θ1)
     """
 
-    __slots__ = "x", "encoding", "grad"
-
     def __init__(self, x: ndarray, encoding: str):
         """
         Parameters
@@ -305,8 +299,11 @@ class RxRyModel(Model):
 
     def _grad_layer(self, θ: ndarray, w: float) -> ndarray:
         """Returns the derivative of one layer with respect to its 3 parameters."""
-        Dx = np.einsum("mng, np -> gmp", RY(w * self.x + θ[1]), grad_RX(θ[0]))
-        Dy = np.einsum("mng, np -> gmp", grad_RY(w * self.x + θ[1]), RX(θ[0]))
-        Dw = np.einsum("gmn, g -> gmn", Dy, self.x)
 
-        return np.array([Dw, Dx, Dy])  # type: ignore
+        def _grad_layer_jit(x: ndarray, θ: ndarray, w: float) -> ndarray:
+            Dx = np.einsum("mng, np -> gmp", RY(w * x + θ[1]), grad_RX(θ[0]))
+            Dy = np.einsum("mng, np -> gmp", grad_RY(w * x + θ[1]), RX(θ[0]))
+            Dw = np.einsum("gmn, g -> gmn", Dy, x)
+            return np.array([Dw, Dx, Dy])  # type: ignore
+
+        return _grad_layer_jit(self.x, θ, w)

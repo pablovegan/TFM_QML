@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 
-from qubit_approximant.optimizer import Optimizer
+from qubit_approximant.core.optimizer import Optimizer
 
 
 class MultilayerOptimizer(ABC):
@@ -20,7 +20,6 @@ class MultilayerOptimizer(ABC):
         min_layer,
         max_layer,
         optimizer: Optimizer,
-        new_layer_position: str,
         new_layer_coef: float = 0.3,
     ):
         """
@@ -35,15 +34,6 @@ class MultilayerOptimizer(ABC):
         self.max_layer = max_layer
 
         self.optimizer = optimizer
-
-        if new_layer_position in MultilayerOptimizer.layer_positions:
-            self.new_layer_position = new_layer_position
-        else:
-            raise ValueError(
-                f"new_layer_position = {new_layer_position} is not supported. "
-                "Try 'initial', 'middle', 'final' or 'random'"
-            )
-
         self.new_layer_coef = new_layer_coef
 
     @abstractmethod
@@ -57,16 +47,12 @@ class NonIncrementalOptimizer(MultilayerOptimizer):
     """This optimizer uses the parameters of an optimized L layer model
     as input for the optimization of a L+1 layer model."""
 
-    blackbox_methods = ["CG", "L-BFGS-B", "COBYLA", "SLSQP"]
-    layer_positions = ["initial", "middle", "final", "random"]
-
     def __init__(
         self,
         min_layer,
         max_layer,
         optimizer: Optimizer,
-        new_layer_position: str,
-        new_layer_coef: float = 0.3,
+        new_layer_coef: float,
     ):
         """
         Initialize a black box optimizer.
@@ -76,15 +62,15 @@ class NonIncrementalOptimizer(MultilayerOptimizer):
         method: str
             The desired optimization method.
         """
-        super().__init__(min_layer, max_layer, optimizer, new_layer_position, new_layer_coef)
+        super().__init__(min_layer, max_layer, optimizer, new_layer_coef)
 
     def __call__(
         self, cost: Callable, grad_cost: Callable, init_params: np.ndarray
     ) -> list[np.ndarray]:
 
-        self.params_per_layer = init_params // self.min_layer
-        params = init_params
+        self.params_per_layer = init_params.size // self.min_layer
         self.params_list = []
+        params = init_params
 
         for layer in range(self.min_layer, self.max_layer + 1):
             params = self.optimizer(cost, grad_cost, params)
@@ -103,7 +89,7 @@ class IncrementalOptimizer(MultilayerOptimizer):
         max_layer,
         optimizer: Optimizer,
         new_layer_position: str,
-        new_layer_coef: float = 0.3,
+        new_layer_coef: float,
     ):
         """
         Initialize a black box optimizer.
@@ -113,29 +99,34 @@ class IncrementalOptimizer(MultilayerOptimizer):
         method: str
             The desired optimization method.
         """
-        super().__init__(min_layer, max_layer, optimizer, new_layer_position, new_layer_coef)
+        self.new_layer_position = new_layer_position
+        if new_layer_position in MultilayerOptimizer.layer_positions:
+            self.new_layer_position = new_layer_position
+        else:
+            raise ValueError(
+                f"new_layer_position = {new_layer_position} is not supported. "
+                "Try 'initial', 'middle', 'final' or 'random'"
+            )
+        super().__init__(min_layer, max_layer, optimizer, new_layer_coef)
 
     def __call__(
         self,
         cost: Callable,
         grad_cost: Callable,
         init_params: np.ndarray,
-        new_layer_coef: float = 0.3,
     ) -> list[np.ndarray]:
 
-        self.params_per_layer = init_params // self.min_layer
+        self.params_per_layer = init_params.size // self.min_layer
         params = init_params
         self.params_list = []
 
         for layer in range(self.min_layer, self.max_layer + 1):
             params = self.optimizer(cost, grad_cost, params)
             self.params_list.append(params)
-            params = self._new_initial_params(params, layer, new_layer_coef)
+            params = self._new_initial_params(params, layer)
         return self.params_list
 
-    def _new_initial_params(
-        self, params: np.ndarray, current_layer: int, new_layer_coef: float
-    ) -> np.ndarray:
+    def _new_initial_params(self, params: np.ndarray, current_layer: int) -> np.ndarray:
         """Create new initial parameters from the optimized parameters
         with one layer less."""
 
@@ -148,28 +139,29 @@ class IncrementalOptimizer(MultilayerOptimizer):
         elif self.new_layer_position == "random":
             layer = np.random.randint(0, high=current_layer + 1, dtype=int)
 
-        new_layer_val = new_layer_coef * np.random.randn(4)
+        new_layer_val = self.new_layer_coef * np.random.randn(4)
         params = np.insert(params, layer, new_layer_val)
 
         return params
 
+    @property
     def inital_params_diff(self) -> tuple[list[float], list[float]]:
 
         mean_diff = []
         std_diff = []
 
         if self.new_layer_position == "final":
-            for i in range(self.min_layer, self.max_layer - 1):
+            for i in range(self.max_layer - self.min_layer - 1):
                 params0 = self.params_list[i]
-                params1 = self.params_list[i + 1][0 : i * self.params_per_layer]
+                params1 = self.params_list[i + 1][0: - self.params_per_layer]
                 params_diff = params1 - params0
                 mean_diff.append(np.mean(np.abs(params_diff)))
                 std_diff.append(np.std(np.abs(params_diff)))
 
         elif self.new_layer_position == "initial":
-            for i in range(self.min_layer, self.max_layer - 1):
+            for i in range(self.max_layer - self.min_layer - 1):
                 params0 = self.params_list[i]
-                params1 = self.params_list[i + 1][self.params_per_layer : i * self.params_per_layer]
+                params1 = self.params_list[i + 1][self.params_per_layer:]
                 params_diff = params1 - params0
                 mean_diff.append(np.mean(np.abs(params_diff)))
                 std_diff.append(np.std(np.abs(params_diff)))

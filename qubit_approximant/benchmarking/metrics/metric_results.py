@@ -3,7 +3,7 @@ from typing import Callable
 import numpy as np
 
 from qubit_approximant import Cost, Model, MultilayerOptimizer
-from qubit_approximant.benchmark_metric import l2_norm, l1_norm, inf_norm, infidelity
+from .metrics import l2_norm, l1_norm, inf_norm, infidelity
 
 
 def metric_results(

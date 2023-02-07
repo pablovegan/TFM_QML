@@ -10,7 +10,7 @@ from scipy.optimize import minimize
 class Optimizer(ABC):
     """Optimize our quantum circuit."""
 
-    __slots__ = ()
+    __slots__ = ("__dict__")
 
     @abstractmethod
     def __call__(self, cost: Callable, grad_cost: Callable, init_params: ndarray) -> ndarray:
@@ -30,7 +30,6 @@ class BlackBoxOptimizer(Optimizer):
     __slots__ = (
         "method",
         "method_kwargs",
-        "__dict__",
     )  # faster memory access to the attributes than using __dict__
 
     blackbox_methods = ["CG", "L-BFGS-B", "COBYLA", "SLSQP"]
@@ -74,7 +73,7 @@ class BlackBoxOptimizer(Optimizer):
 class GDOptimizer(Optimizer):
     """Gradient descent optimizer."""
 
-    __slots__ = "step_size", "iter_index", "__dict__"
+    __slots__ = "step_size", "iter_index"
 
     def __init__(self, iters: int, step_size: float):
 

@@ -1,4 +1,4 @@
-from core import (
+from .core import (
     Model,
     RotationsModel,
     RyModel,
@@ -11,7 +11,7 @@ from core import (
     NonIncrementalOptimizer,
     IncrementalOptimizer,
 )
-from benchmarking import l1_norm, l2_norm, inf_norm, infidelity
+from .benchmarking import l1_norm, l2_norm, inf_norm, infidelity
 
 __all__ = [
     "Model",
@@ -22,11 +22,11 @@ __all__ = [
     "GDOptimizer",
     "AdamOptimizer",
     "BlackBoxOptimizer",
+    "MultilayerOptimizer",
+    "NonIncrementalOptimizer",
+    "IncrementalOptimizer",
     "l1_norm",
     "l2_norm",
     "inf_norm",
     "infidelity",
-    "MultilayerOptimizer",
-    "NonIncrementalOptimizer",
-    "IncrementalOptimizer",
 ]

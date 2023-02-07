@@ -2,7 +2,7 @@
 
 from numpy import ndarray
 
-from qubit_approximant.model import Model
+from qubit_approximant.core.model import Model
 from ._cost_metrics import *  # noqa
 
 
