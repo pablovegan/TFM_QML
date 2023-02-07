@@ -15,8 +15,8 @@ def l2_norm(fn: Callable, fn_approx: Callable, x_limits: tuple[float, float]) ->
 
 
 def inf_norm(fn: Callable, fn_approx: Callable, x_limits: tuple[float, float]) -> float:
-    y = np.linspace(x_limits[0], x_limits[1], 10000)
-    return np.max(np.abs(fn(y) - fn_approx(y)))
+    x = np.linspace(x_limits[0], x_limits[1], 10000)
+    return np.max(np.abs(fn(x) - fn_approx(x)))
 
 
 def infidelity(fn: Callable, fn_approx: Callable, x_limits: tuple[float, float]) -> float:

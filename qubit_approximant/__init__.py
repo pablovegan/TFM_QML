@@ -11,7 +11,7 @@ from .core import (
     NonIncrementalOptimizer,
     IncrementalOptimizer,
 )
-from .benchmarking import l1_norm, l2_norm, inf_norm, infidelity
+from .benchmarking import l1_norm, l2_norm, inf_norm, infidelity, metric_results
 
 __all__ = [
     "Model",
@@ -29,4 +29,5 @@ __all__ = [
     "l2_norm",
     "inf_norm",
     "infidelity",
+    "metric_results"
 ]
