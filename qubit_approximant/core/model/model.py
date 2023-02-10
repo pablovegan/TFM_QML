@@ -16,6 +16,15 @@ from numpy import ndarray
 from ._gates_and_grads import RX, RY, RZ, grad_RX, grad_RY, grad_RZ
 
 
+class ParameterError(Exception):
+    """Exception raised when the number of parameters given does
+    not correspond with the circuit ansatz."""
+
+    def __init__(self, params_per_layer):
+        self.message = f"The number of parameters must be {params_per_layer} per layer."
+        super().__init__(self.message)
+
+
 class Model(ABC):
     """
     Quantum circuit that encodes our function. The circuit consists of
@@ -24,7 +33,7 @@ class Model(ABC):
     U = Ln * ... * L1
     """
 
-    __slots__ = "encoding", "grad", "__dict__"
+    __slots__ = "encoding", "grad", "params_layer", "__dict__"
 
     def __init__(self, x: ndarray, encoding: str):
         """
@@ -45,6 +54,8 @@ class Model(ABC):
             self.grad = self._grad_amp
         else:
             raise ValueError("Invalid encoding '{encoding}'. Choose between 'prob' or 'amp'.")
+
+        self.params_layer = 0  # To be defined in subclasses
 
     @property
     def x(self):
@@ -160,13 +171,15 @@ class RotationsModel(Model):
             Must be either 'amp' or 'prob'.
         """
         super().__init__(x, encoding)
+        self.params_layer = 4
 
     def split(self, params: ndarray) -> tuple[ndarray, ndarray]:
         """Split the parameters into"""
-        assert params.size % 4 == 0, "Error: number of parameters must equal 4 * layers."
-        layers = params.size // 4
-        params = params.reshape(layers, 4)
-        return params[:, 0].reshape(-1), params[:, 1:4]
+        if params.size % self.params_layer != 0:
+            raise ParameterError(self.params_layer)
+        layers = params.size // self.params_layer
+        params = params.reshape(layers, self.params_layer)
+        return params[:, 0].reshape(-1), params[:, 1 : self.params_layer]
 
     def _layer(self, θ: ndarray, w: float) -> ndarray:
         """
@@ -216,13 +229,15 @@ class RyModel(Model):
             Must be either 'amp' or 'prob'.
         """
         super().__init__(x, encoding)
+        self.params_layer = 2
 
     def split(self, params: ndarray) -> tuple[ndarray, ndarray]:
         """Split the parameters into"""
-        assert params.size % 2 == 0, "Error: number of parameters must equal 2 * layers."
-        layers = params.size // 2
-        params = params.reshape(layers, 2)
-        return params[:, 0].reshape(-1), params[:, 1:2]
+        if params.size % self.params_layer != 0:
+            raise ParameterError(self.params_layer)
+        layers = params.size // self.params_layer
+        params = params.reshape(layers, self.params_layer)
+        return params[:, 0].reshape(-1), params[:, 1 : self.params_layer]
 
     def _layer(self, θ: ndarray, w: float) -> ndarray:
         """
@@ -270,13 +285,15 @@ class RxRyModel(Model):
             Must be either 'amp' or 'prob'.
         """
         super().__init__(x, encoding)
+        self.params_layer = 3
 
     def split(self, params: ndarray) -> tuple[ndarray, ndarray]:
         """Split the parameters into"""
-        assert params.size % 3 == 0, "Error: number of parameters must equal 3 * layers."
-        layers = params.size // 3
-        params = params.reshape(layers, 3)
-        return params[:, 0].reshape(-1), params[:, 1:3]
+        if params.size % self.params_layer != 0:
+            raise ParameterError(self.params_layer)
+        layers = params.size // self.params_layer
+        params = params.reshape(layers, self.params_layer)
+        return params[:, 0].reshape(-1), params[:, 1 : self.params_layer]
 
     def _layer(self, θ: ndarray, w: float) -> ndarray:
         """

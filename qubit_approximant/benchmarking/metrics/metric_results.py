@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, Tuple
 
 import numpy as np
 
@@ -7,17 +7,16 @@ from .metrics import l2_norm, l1_norm, inf_norm, infidelity
 
 
 def metric_results(
-    params_list: list[np.ndarray],
-    model: Model,
-    fn: Callable,
-    fn_kwargs: dict,
-    x_limits: tuple[float, float],
-):
+    fn: Callable, fn_kwargs: dict, model: Model, params_list: list[np.ndarray]
+) -> Tuple[list[float], ...]:
     """Returns four lists of errors, one for each layer."""
     l1_list = []
     l2_list = []
     inf_list = []
     infidelity_list = []
+
+    save_model_x = model.x
+    x_limits = (model.x[0], model.x[-1])
 
     def fn_eval(x):
         return fn(x, **fn_kwargs)
@@ -34,8 +33,10 @@ def metric_results(
 
         def fn_approx_inf_eval(x):
             model.x = np.array(x)
-            return model(params)[0]  # one element array
+            return model(params)  # one element array
 
         inf_list.append(inf_norm(fn_eval, fn_approx_inf_eval, x_limits))
+
+    model.x = save_model_x
 
     return l1_list, l2_list, inf_list, infidelity_list

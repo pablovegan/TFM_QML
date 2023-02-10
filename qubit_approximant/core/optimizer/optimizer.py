@@ -10,7 +10,7 @@ from scipy.optimize import minimize
 class Optimizer(ABC):
     """Optimize our quantum circuit."""
 
-    __slots__ = ("__dict__")
+    __slots__ = "__dict__"
 
     @abstractmethod
     def __call__(self, cost: Callable, grad_cost: Callable, init_params: ndarray) -> ndarray:
