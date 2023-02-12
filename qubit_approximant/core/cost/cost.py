@@ -9,7 +9,7 @@ from ._cost_metrics import *  # noqa
 class Cost:
     """
     Create a cost function from the encoding and the metric.
-    
+
     Attributes
     ----------
     metric: Callable

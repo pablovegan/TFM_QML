@@ -141,7 +141,7 @@ class IncrementalOptimizer(MultilayerOptimizer):
     """
     This optimizer uses the parameters of an optimized L layer circuit
     as input for the optimization of a L+1 layer circuit.
-    
+
     Attributes
     ----------
     new_layer_position : str
@@ -246,7 +246,7 @@ class IncrementalOptimizer(MultilayerOptimizer):
         if self.new_layer_position == "final":
             for i in range(self.max_layer - self.min_layer - 1):
                 params0 = self.params_list[i]
-                params1 = self.params_list[i + 1][0: -self.params_layer]
+                params1 = self.params_list[i + 1][0 : -self.params_layer]
                 params_diff = params1 - params0
                 mean_diff.append(np.mean(np.abs(params_diff)))
                 std_diff.append(np.std(np.abs(params_diff)))
@@ -254,7 +254,7 @@ class IncrementalOptimizer(MultilayerOptimizer):
         elif self.new_layer_position == "initial":
             for i in range(self.max_layer - self.min_layer - 1):
                 params0 = self.params_list[i]
-                params1 = self.params_list[i + 1][self.params_layer:]
+                params1 = self.params_list[i + 1][self.params_layer :]
                 params_diff = params1 - params0
                 mean_diff.append(np.mean(np.abs(params_diff)))
                 std_diff.append(np.std(np.abs(params_diff)))

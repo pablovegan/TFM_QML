@@ -78,12 +78,6 @@ def benchmark_seeds(
 
         with open(filename + ".pkl", "wb") as file:
             pickle.dump(
-                (
-                    layer_list,
-                    metrics[0, ...],
-                    metrics[1, ...],
-                    metrics[2, ...],
-                    metrics[3, ...],
-                ),
+                (layer_list, metrics[0, ...], metrics[1, ...], metrics[2, ...], metrics[3, ...]),
                 file,
             )

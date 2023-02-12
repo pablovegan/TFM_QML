@@ -101,7 +101,7 @@ class GDOptimizer(Optimizer):
     __slots__ = "step_size", "iter_index", "min_cost"
 
     def __init__(self, iters: int, step_size: float):
-        """        
+        """
         Parameters
         ----------
         iters : int

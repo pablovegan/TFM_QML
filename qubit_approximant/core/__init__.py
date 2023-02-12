@@ -10,7 +10,10 @@ from .optimizer import (
 )
 
 __all__ = [
-    "Circuit", "CircuitRxRyRz", "CircuitRy", "CircuitRxRy",
+    "Circuit",
+    "CircuitRxRyRz",
+    "CircuitRy",
+    "CircuitRxRy",
     "Cost",
     "GDOptimizer",
     "AdamOptimizer",
