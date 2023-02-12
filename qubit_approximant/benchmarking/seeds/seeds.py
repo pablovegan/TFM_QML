@@ -1,4 +1,4 @@
-"""Benchmark our model for multiple seeds."""
+"""Benchmark our encoding and optimizer for multiple seeds."""
 
 import pickle
 from typing import Callable, Tuple
@@ -10,17 +10,15 @@ from mpi4py import MPI
 
 # from multiprocessing import Pool, cpu_count
 
-from qubit_approximant.core.model import Model
-from qubit_approximant.core.cost import Cost
-from qubit_approximant.core.optimizer import MultilayerOptimizer
-from qubit_approximant.benchmarking.metrics.metric_results import metric_results
+from qubit_approximant.core import Circuit, Cost, MultilayerOptimizer
+from qubit_approximant.benchmarking import metric_results
 
 
 def benchmark_seeds(
     num_seeds: int,
     fn: Callable,
     fn_kwargs: dict,
-    model: Model,
+    circuit: Circuit,
     cost: Cost,
     optimizer: MultilayerOptimizer,
     filename: str,
@@ -42,9 +40,9 @@ def benchmark_seeds(
 
     def metric_results_seed(seed: int) -> Tuple[list[float], ...]:
         np.random.seed(seed)
-        params = opt.new_layer_coef * np.random.randn(model.params_layer * opt.min_layer)
+        params = opt.new_layer_coef * np.random.randn(circuit.params_layer * opt.min_layer)
         params_list = opt(cost, cost.grad, params)
-        return metric_results(fn, fn_kwargs, model, params_list)
+        return metric_results(fn, fn_kwargs, circuit, params_list)
 
     with ProcessingPool(cpu_count()) as p:
         metrics_per_seed = p.map(metric_results_seed, seed_list)

@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from qubit_approximant import RotationsModel, Cost, BlackBoxOptimizer, AdamOptimizer
+from qubit_approximant.core import CircuitRxRyRz, Cost, BlackBoxOptimizer, AdamOptimizer
 from qubit_approximant.core.optimizer import IncrementalOptimizer, NonIncrementalOptimizer
 
 
@@ -17,14 +17,14 @@ class TestOptimizer(unittest.TestCase):
         self.params = 0.7 * np.random.randn(4 * layers)
 
     def test_blackbox(self):
-        model = RotationsModel(x=self.x, encoding="prob")
+        model = CircuitRxRyRz(x=self.x, encoding="prob")
         cost = Cost(self.fn, model, metric="mse")
         opt = BlackBoxOptimizer(method="L-BFGS-B")
         params = opt(cost, cost.grad, self.params)
         assert cost(params) < 1e-5
 
     def test_adam(self):
-        model = RotationsModel(x=self.x, encoding="prob")
+        model = CircuitRxRyRz(x=self.x, encoding="prob")
         cost = Cost(self.fn, model, metric="mse")
         opt = AdamOptimizer(5000)
         params = opt(cost, cost.grad, self.params)
@@ -43,7 +43,7 @@ class TestIncrementalOptimizer(unittest.TestCase):
         self.params = 0.3 * np.random.randn(4 * self.min_layers)
 
     def test_blackbox(self):
-        model = RotationsModel(x=self.x, encoding="prob")
+        model = CircuitRxRyRz(x=self.x, encoding="prob")
         cost = Cost(self.fn, model, metric="mse")
         opt = BlackBoxOptimizer(method="L-BFGS-B")
         multilayer_opt = IncrementalOptimizer(self.min_layers, self.max_layers, opt, "final", 0.3)
@@ -66,7 +66,7 @@ class TestNonIncrementalOptimizer(unittest.TestCase):
         self.params = 0.3 * np.random.randn(4 * self.min_layers)
 
     def test_blackbox(self):
-        model = RotationsModel(x=self.x, encoding="prob")
+        model = CircuitRxRyRz(x=self.x, encoding="prob")
         cost = Cost(self.fn, model, metric="mse")
         opt = BlackBoxOptimizer(method="L-BFGS-B")
         multilayer_opt = NonIncrementalOptimizer(self.min_layers, self.max_layers, opt, 0.3)

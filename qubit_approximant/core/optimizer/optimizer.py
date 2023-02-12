@@ -14,6 +14,23 @@ class Optimizer(ABC):
 
     @abstractmethod
     def __call__(self, cost: Callable, grad_cost: Callable, init_params: ndarray) -> ndarray:
+        """
+        Calculate the optimized parameters.
+
+        Parameters
+        ----------
+        cost: Callable
+            Cost function to be minimized.
+        grad_cost: Callable
+            Gradient of the cost function.
+        init_params : ndarray
+            Initial parameter guess for the cost function; used to initialize the optimizer.
+
+        Returns
+        -------
+        ndarray
+            Optimum parameters
+        """
         ...
 
 
@@ -25,6 +42,8 @@ class BlackBoxOptimizer(Optimizer):
     ----------
     method: str
         The desired optimization method.
+    method_kwargs : dict
+        A dictionary with keyword arguments for the optimizer.
     """
 
     __slots__ = (
@@ -40,8 +59,10 @@ class BlackBoxOptimizer(Optimizer):
 
         Parameters
         ----------
-        method: str
+        method : str
             The desired optimization method.
+        method_kwargs : dict
+            A dictionary with keyword arguments for the optimizer.
         """
         if method in BlackBoxOptimizer.blackbox_methods:
             self.method = method
@@ -55,13 +76,17 @@ class BlackBoxOptimizer(Optimizer):
 
         Parameters
         ----------
-        cost_fn: Callable
+        cost: Callable
             Cost function to be minimized.
+        grad_cost: Callable
+            Gradient of the cost function.
         init_params : ndarray
             Initial parameter guess for the cost function; used to initialize the optimizer.
-        **kwargs
-            Specific keyword arguments for the chosen optimizer.
-            The keyword arguments are passed to `scipy.optimize.minimize().`
+
+        Returns
+        -------
+        ndarray
+            Optimum parameters
         """
         result = minimize(
             cost, init_params, method=self.method, jac=grad_cost, options=self.method_kwargs
@@ -73,15 +98,23 @@ class BlackBoxOptimizer(Optimizer):
 class GDOptimizer(Optimizer):
     """Gradient descent optimizer."""
 
-    __slots__ = "step_size", "iter_index"
+    __slots__ = "step_size", "iter_index", "min_cost"
 
     def __init__(self, iters: int, step_size: float):
-
+        """        
+        Parameters
+        ----------
+        iters : int
+            The number of gradient descent iterations to perform.
+        step_size : float
+            The size of the step of each gradient descent iteration.
+        """
         self.step_size = step_size
         self._iters = iters
 
     @property
     def iters(self):
+        """Number of iterations of gradient descent."""
         return self._iters
 
     @iters.setter
@@ -101,6 +134,11 @@ class GDOptimizer(Optimizer):
             Initial parameter guess for the cost function; used to initialize the optimizer.
         iter: int
             Number of iterations of gradient descent to perform.
+
+        Returns
+        -------
+        ndarray
+            Optimum parameters
         """
         min_cost = 100000
         min_params = zeros_like(params)
@@ -127,14 +165,14 @@ class AdamOptimizer(GDOptimizer):
 
     Attributes
     ----------
-    alpha : float
-        steps size
+    step_size : float
+        The size of the step of each gradient descent iteration.
     beta1 : float
-        factor for average gradient
+        The factor for the average gradient.
     beta2 : float
-        factor for average squared gradient
+        The factor for the average squared gradient.
     eps: float
-        regularizing small parameter used to avoid division by zero
+        A regularizing small parameter used to avoid division by zero.
 
     References
     ----------
@@ -156,14 +194,16 @@ class AdamOptimizer(GDOptimizer):
         """
         Parameters
         ----------
-        alpha : float
-            steps size
+        iters : int
+            The number of gradient descent iterations to perform.
+        step_size : float
+            The size of the step of each gradient descent iteration.
         beta1 : float
-            factor for average gradient
+            The factor for the average gradient.
         beta2 : float
-            factor for average squared gradient
+            The factor for the average squared gradient.
         eps: float
-            regularizing small parameter used to avoid division by zero
+            A regularizing small parameter used to avoid division by zero.
         """
         self.step_size = step_size
         self.beta1 = beta1

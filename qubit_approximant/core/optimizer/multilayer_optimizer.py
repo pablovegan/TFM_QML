@@ -1,4 +1,17 @@
-"""Incremental optimizer"""
+"""
+Incremental optimizer
+
+Classes
+-------
+MultilayerOptimizer:
+    Base class for the optimization of circuits with multiple layers.
+NonIncrementalOptimizer:
+    This optimizer uses the parameters of an optimized L layer circuit
+    as input for the optimization of a L+1 layer circuit.
+IncrementalOptimizer:
+    This optimizer uses the parameters of an optimized L layer circuit
+    as input for the optimization of a L+1 layer circuit.
+"""
 
 from typing import Callable
 from abc import ABC, abstractmethod
@@ -9,11 +22,22 @@ from qubit_approximant.core.optimizer import Optimizer
 
 
 class MultilayerOptimizer(ABC):
-    """This optimizer uses the parameters of an optimized L layer model
-    as input for the optimization of a L+1 layer model."""
+    """
+    This optimizer uses the parameters of an optimized L layer circuit
+    as input for the optimization of a L+1 layer circuit.
 
-    blackbox_methods = ["CG", "L-BFGS-B", "COBYLA", "SLSQP"]
-    layer_positions = ["initial", "middle", "final", "random"]
+    Attributes
+    ----------
+    min_layer : int
+        Starting number of layers to optimize.
+    max_layer : int
+        Final number of layers to optimize.
+    optimizer : Optimizer
+        The optimizer used to find the optimum parameters.
+    new_layer_coef : float
+        The coefficient that multiplies the normal distribution of the
+        new parameters in the additional layer.
+    """
 
     def __init__(self, min_layer, max_layer, optimizer: Optimizer, new_layer_coef: float = 0.3):
         """
@@ -21,12 +45,18 @@ class MultilayerOptimizer(ABC):
 
         Parameters
         ----------
-        method: str
-            The desired optimization method.
+        min_layer : int
+            Starting number of layers to optimize.
+        max_layer : int
+            Final number of layers to optimize.
+        optimizer : Optimizer
+            The optimizer used to find the optimum parameters.
+        new_layer_coef : float
+            The coefficient that multiplies the normal distribution of the
+            new parameters in the additional layer.
         """
         self.min_layer = min_layer
         self.max_layer = max_layer
-
         self.optimizer = optimizer
         self.new_layer_coef = new_layer_coef
 
@@ -34,12 +64,29 @@ class MultilayerOptimizer(ABC):
     def __call__(
         self, cost: Callable, grad_cost: Callable, init_params: np.ndarray
     ) -> list[np.ndarray]:
+        """
+        Calculate the optimized parameters for each number of layers.
+
+        Parameters
+        ----------
+        cost: Callable
+            Cost function to be minimized.
+        grad_cost: Callable
+            Gradient of the cost function.
+        init_params : ndarray
+            Initial parameter guess for the cost function; used to initialize the optimizer.
+
+        Returns
+        -------
+        list of ndarray
+            The optimum parameters for each number of layers.
+        """
         ...
 
 
 class NonIncrementalOptimizer(MultilayerOptimizer):
-    """This optimizer uses the parameters of an optimized L layer model
-    as input for the optimization of a L+1 layer model."""
+    """This optimizer creates new initial parameters for the optimization
+    of a circuit with an additional layer."""
 
     def __init__(self, min_layer, max_layer, optimizer: Optimizer, new_layer_coef: float):
         """
@@ -47,29 +94,62 @@ class NonIncrementalOptimizer(MultilayerOptimizer):
 
         Parameters
         ----------
-        method: str
-            The desired optimization method.
+        min_layer : int
+            Starting number of layers to optimize.
+        max_layer : int
+            Final number of layers to optimize.
+        optimizer : Optimizer
+            The optimizer used to find the optimum parameters.
+        new_layer_coef : float
+            The coefficient that multiplies the normal distribution of the
+            new parameters in the additional layer.
         """
         super().__init__(min_layer, max_layer, optimizer, new_layer_coef)
 
     def __call__(
         self, cost: Callable, grad_cost: Callable, init_params: np.ndarray
     ) -> list[np.ndarray]:
+        """
+        Calculate the optimized parameters for each number of layers.
 
-        self.params_per_layer = init_params.size // self.min_layer
+        Parameters
+        ----------
+        cost: Callable
+            Cost function to be minimized.
+        grad_cost: Callable
+            Gradient of the cost function.
+        init_params : ndarray
+            Initial parameter guess for the cost function; used to initialize the optimizer.
+
+        Returns
+        -------
+        list of ndarray
+            The optimum parameters for each number of layers.
+        """
+        self.params_layer = init_params.size // self.min_layer
         self.params_list = []
         params = init_params
 
         for layer in range(self.min_layer, self.max_layer + 1):
             params = self.optimizer(cost, grad_cost, params)
             self.params_list.append(params)
-            params = self.new_layer_coef * np.random.randn((layer + 1) * self.params_per_layer)
+            params = self.new_layer_coef * np.random.randn((layer + 1) * self.params_layer)
         return self.params_list
 
 
 class IncrementalOptimizer(MultilayerOptimizer):
-    """This optimizer uses the parameters of an optimized L layer model
-    as input for the optimization of a L+1 layer model."""
+    """
+    This optimizer uses the parameters of an optimized L layer circuit
+    as input for the optimization of a L+1 layer circuit.
+    
+    Attributes
+    ----------
+    new_layer_position : str
+        The position where to add the parameters of the new layer. For,
+        example, it may be the initial or final layer of our circuit.
+    """
+
+    layer_positions = ["initial", "middle", "final", "random"]
 
     def __init__(
         self,
@@ -84,11 +164,20 @@ class IncrementalOptimizer(MultilayerOptimizer):
 
         Parameters
         ----------
-        method: str
-            The desired optimization method.
+        min_layer : int
+            Starting number of layers to optimize.
+        max_layer : int
+            Final number of layers to optimize.
+        optimizer : Optimizer
+            The optimizer used to find the optimum parameters.
+        new_layer_coef : float
+            The coefficient that multiplies the normal distribution of the
+            new parameters in the additional layer.
+        new_layer_position : str
+            The position where to add the parameters of the new layer. For,
+            example, it may be the initial or final layer of our circuit.
         """
-        self.new_layer_position = new_layer_position
-        if new_layer_position in MultilayerOptimizer.layer_positions:
+        if new_layer_position in IncrementalOptimizer.layer_positions:
             self.new_layer_position = new_layer_position
         else:
             raise ValueError(
@@ -100,8 +189,24 @@ class IncrementalOptimizer(MultilayerOptimizer):
     def __call__(
         self, cost: Callable, grad_cost: Callable, init_params: np.ndarray
     ) -> list[np.ndarray]:
+        """
+        Calculate the optimized parameters for each number of layers.
 
-        self.params_per_layer = init_params.size // self.min_layer
+        Parameters
+        ----------
+        cost: Callable
+            Cost function to be minimized.
+        grad_cost: Callable
+            Gradient of the cost function.
+        init_params : ndarray
+            Initial parameter guess for the cost function; used to initialize the optimizer.
+
+        Returns
+        -------
+        list of ndarray
+            The optimum parameters for each number of layers.
+        """
+        self.params_layer = init_params.size // self.min_layer
         params = init_params
         self.params_list = []
 
@@ -131,14 +236,17 @@ class IncrementalOptimizer(MultilayerOptimizer):
 
     @property
     def inital_params_diff(self) -> tuple[list[float], list[float]]:
-
+        """Returns a list with the mean and standard deviation of the
+        difference between the optimum parameters in the i-th layer
+        and the optimum parameters of the (i+1)-th layer.
+        (We exclude the additional parameters added with the new layer)."""
         mean_diff = []
         std_diff = []
 
         if self.new_layer_position == "final":
             for i in range(self.max_layer - self.min_layer - 1):
                 params0 = self.params_list[i]
-                params1 = self.params_list[i + 1][0 : -self.params_per_layer]
+                params1 = self.params_list[i + 1][0: -self.params_layer]
                 params_diff = params1 - params0
                 mean_diff.append(np.mean(np.abs(params_diff)))
                 std_diff.append(np.std(np.abs(params_diff)))
@@ -146,7 +254,7 @@ class IncrementalOptimizer(MultilayerOptimizer):
         elif self.new_layer_position == "initial":
             for i in range(self.max_layer - self.min_layer - 1):
                 params0 = self.params_list[i]
-                params1 = self.params_list[i + 1][self.params_per_layer :]
+                params1 = self.params_list[i + 1][self.params_layer:]
                 params_diff = params1 - params0
                 mean_diff.append(np.mean(np.abs(params_diff)))
                 std_diff.append(np.std(np.abs(params_diff)))

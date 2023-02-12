@@ -1,4 +1,4 @@
-from .model import Model, RotationsModel, RyModel, RxRyModel
+from .circuit import Circuit, CircuitRxRyRz, CircuitRy, CircuitRxRy
 from .cost import Cost
 from .optimizer import (
     GDOptimizer,
@@ -10,10 +10,7 @@ from .optimizer import (
 )
 
 __all__ = [
-    "Model",
-    "RyModel",
-    "RxRyModel",
-    "RotationsModel",
+    "Circuit", "CircuitRxRyRz", "CircuitRy", "CircuitRxRy",
     "Cost",
     "GDOptimizer",
     "AdamOptimizer",
