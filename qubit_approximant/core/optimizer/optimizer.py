@@ -1,4 +1,17 @@
-"""Optimizers for our model."""
+"""
+Optimizers for our cost function.
+
+Classes
+-------
+Optimizer:
+    Base class for the optimization of a circuit with fixed number of layers.
+BlackBoxOptimizer:
+    This optimizer uses scipy.minimize as a black box optimizer.
+GDOptimizer:
+    Gradient descent optimizer.
+AdamOptimizer:
+    A Method for Stochastic Optimization optimizer.
+"""
 
 from abc import ABC, abstractmethod
 from typing import Callable

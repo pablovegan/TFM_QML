@@ -27,9 +27,8 @@ class ParameterError(Exception):
 
 
 class Circuit(ABC):
-    """
-    Quantum circuit that encodes the function. The circuit consists of
-    a number of layers,
+    """Quantum circuit that encodes the function. The circuit
+    consists of a number of layers,
 
     U = Ln * ... * L1
 
@@ -52,7 +51,7 @@ class Circuit(ABC):
         ----------
         x: ndarray
             Values where to evaluate the function encoded in the circuit.
-        encoding: str
+        encoding : str
             Choose between amplitude or probability encoding.
             Must be either 'amp' or 'prob'.
         params_layer : int
@@ -83,19 +82,7 @@ class Circuit(ABC):
 
     @abstractmethod
     def layer(self, params: ndarray) -> ndarray:
-        """
-        Returns the layer of our circuit.
-
-        Parameters
-        ----------
-        params : ndarray
-            Parameters of the quantum gates in the layer.
-
-        Returns
-        -------
-        A : (G,2,2) ndarray
-            Unitary matrix of the layer.
-        """
+        """Returns the layer of our circuit."""
         ...
 
     def _amp_encoding(self, params: ndarray) -> ndarray:
@@ -190,8 +177,14 @@ class CircuitRxRyRz(Circuit):
 
         Returns
         -------
-        A : (G,2,2) ndarray
-            Unitary matrix of the layer.
+        ndarray
+            Unitary matrix of the layer with size (x,2,2)
+
+        Raises
+        ------
+        ParameterError
+            The number of parameters given does not correspond with
+            the circuit ansatz.
         """
         if params.size != self.params_layer:
             raise ParameterError(self.params_layer)
@@ -250,8 +243,14 @@ class CircuitRxRy(Circuit):
 
         Returns
         -------
-        A : (G,2,2) array
-            Unitary matrix of the layer.
+        ndarray
+            Unitary matrix of the layer with size (x,2,2)
+
+        Raises
+        ------
+        ParameterError
+            The number of parameters given does not correspond with
+            the circuit ansatz.
         """
         if params.size != self.params_layer:
             raise ParameterError(self.params_layer)
@@ -305,8 +304,14 @@ class CircuitRy(Circuit):
 
         Returns
         -------
-        A : (G,2,2) array
-            Unitary matrix of the layer.
+        ndarray
+            Unitary matrix of the layer with size (x,2,2)
+
+        Raises
+        ------
+        ParameterError
+            The number of parameters given does not correspond with
+            the circuit ansatz.
         """
         if params.size != self.params_layer:
             raise ParameterError(self.params_layer)
