@@ -23,7 +23,30 @@ def benchmark_seeds(
     optimizer: MultilayerOptimizer,
     filename: str,
 ) -> None:
+    """Benchmark a circuit ansatz, cost and multilayer optimizer for different seeds.
+    The benchmarks are paralelized throught different nodes and cpu cores. The results
+    are saved in a file in the order:
+    layers_list, l1_list, l2_list, inf_list, infidelity_list;
+    where each list contains the metric for each seed with every number of layers.
 
+    Parameters
+    ----------
+    num_seeds : int
+        Number of seeds to benchmark.
+    fn : Callable
+        Function we want to approximate.
+    fn_kwargs : dict
+        Keyword arguments for 'fn'.
+    circuit : Circuit
+        Circuit ansatz used to encode the function.
+    cost : Cost
+        Cost or loss function used in the optimization to estimate the error
+        in approximating fn using the quantum circuit.
+    optimizer : MultilayerOptimizer
+        Optimizer to obtain optimum parameters for multiple number of layers.
+    filename : str
+        File name to store the results (they may take some time).
+    """
     opt = optimizer
     num_layer = opt.max_layer - opt.min_layer + 1
 

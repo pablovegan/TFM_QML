@@ -5,28 +5,38 @@ repo_url: https://github.com/pablovegan/TFM_QML
 repo_name: pablovegan/TFM_QML
 
 theme:
+  features:
+    - navigation.tracking
+    - navigation.indexes
+    - toc.follow
+    - navigation.top
   icon:
     repo: fontawesome/brands/github
   name: "material"
   palette:
     - media: "(prefers-color-scheme: light)"
-      primary: "blue"
-      accent: "grey"
+      primary: "red"
+      accent: "indigo"
       scheme: default
       toggle:
-        icon: material/toggle-switch-off-outline
+        icon: material/lightbulb
         name: Switch to dark mode
     - media: "(prefers-color-scheme: dark)"
-      primary: "blue"
+      primary: "indigo"
       accent: "white"
       scheme: slate
       toggle:
-        icon: material/toggle-switch
+        icon: material/lightbulb-outline
         name: Switch to light mode
 
 plugins:
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_style: numpy
   - search
-  - mkdocstrings
+  - autorefs
 
 markdown_extensions:
   - pymdownx.highlight
@@ -39,3 +49,25 @@ extra_javascript:
 nav:
   - "Start": index.md
   - "API": api.md
+  - qa.core:
+    - qa.core.circuit:
+      - "Circuit": qa.core/circuit/circuit.md
+      - "CircuitRxRyRz": qa.core/circuit/circuitrxryrz.md
+      - "CircuitRxRy": qa.core/circuit/circuitrxry.md
+      - "CircuitRy": qa.core/circuit/circuitry.md
+    - qa.core.optimizer:
+      - "Optimizer": qa.core/optimizer/optimizer.md
+      - "BlackBoxOptimizer": qa.core/optimizer/blackboxoptimizer.md
+      - "GDOptimizer": qa.core/optimizer/gdoptimizer.md
+      - "AdamOptimizer": qa.core/optimizer/adamoptimizer.md
+      - "MultilayerOptimizer": qa.core/optimizer/multilayer.md
+      - "NonIncrementalOptimizer": qa.core/optimizer/multilayernonincremental.md
+      - "IncrementalOptimizer": qa.core/optimizer/multilayerincremental.md
+    - qa.core.cost:
+      - "Cost": qa.core/cost/cost.md
+  - qa.benchmarking:
+      - "test functions": qa.benchmarking/functions.md
+      - "metric results": qa.benchmarking/metrics.md
+      - "seeds benchmark": qa.benchmarking/seeds.md
+
+

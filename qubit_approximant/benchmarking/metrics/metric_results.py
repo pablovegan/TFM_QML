@@ -9,7 +9,29 @@ from .metrics import l2_norm, l1_norm, inf_norm, infidelity
 def metric_results(
     fn: Callable, fn_kwargs: dict, circuit: Circuit, params_list: list[np.ndarray]
 ) -> Tuple[list[float], ...]:
-    """Returns four lists of errors, one for each layer."""
+    """Returns 4 lists of error metrics, one for each layer. The metrics are:
+        - L1 norm
+        - L2 norm
+        - Infinity norm
+        - Infidelity
+
+    Parameters
+    ----------
+    fn : Callable
+        Function we want to approximate.
+    fn_kwargs : dict
+        Keyword arguments for 'fn'.
+    circuit : Circuit
+        Circuit used to model 'fn'.
+    params_list : list[np.ndarray]
+        List of parameters for the circuit with different number of layers.
+
+    Returns
+    -------
+    Tuple[list[float], ...]
+        Returns lists of L1 norms, L2 norms, infinity norms and infidelities
+        for every number of layers.
+    """
     l1_list = []
     l2_list = []
     inf_list = []

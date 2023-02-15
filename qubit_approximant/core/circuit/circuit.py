@@ -51,7 +51,7 @@ class Circuit(ABC):
         ----------
         x: ndarray
             Values where to evaluate the function encoded in the circuit.
-        encoding : str
+        encoding_type : str
             Choose between amplitude or probability encoding.
             Must be either 'amp' or 'prob'.
         params_layer : int
@@ -60,33 +60,68 @@ class Circuit(ABC):
         self.x = x
 
         if encoding_type == "prob":
-            self.encoding = self._prob_encoding
-            self.grad_encoding = self._grad_prob
+            self.encoding = self.prob_encoding
+            self.grad_encoding = self.grad_prob
         elif encoding_type == "amp":
-            self.encoding = self._amp_encoding
-            self.grad_encoding = self._grad_amp
+            self.encoding = self.amp_encoding
+            self.grad_encoding = self.grad_amp
         else:
             raise ValueError("Invalid encoding '{encoding}'. Choose between 'prob' or 'amp'.")
 
         self.params_layer = params_layer  # To be defined in subclasses
 
     @property
-    def x(self):
-        """Values where to evaluate the function encoded in the circuit."""
+    def x(self) -> ndarray:
+        """Values where to evaluate the function encoded in the circuit.
+
+        Returns
+        -------
+        ndarray
+            The value of x.
+        """
         return self._x
 
     @x.setter
-    def x(self, new_x):
-        """Change x doing object.x = new_x"""
+    def x(self, new_x: ndarray) -> None:
+        """
+        Update the array where to evaluate the function.
+
+        Parameters
+        ----------
+        new_x : ndarray
+            New value for the independent variable x.
+        """
         self._x = new_x
 
     @abstractmethod
     def layer(self, params: ndarray) -> ndarray:
-        """Returns the layer of our circuit."""
+        """Returns the layer of our circuit
+
+        Parameters
+        ----------
+        params : ndarray
+            Parameters of the quantum gates in the layer.
+
+        Returns
+        -------
+        ndarray
+            Unitary matrix of the layer with size (x,2,2)
+        """
         ...
 
-    def _amp_encoding(self, params: ndarray) -> ndarray:
-        """Returns approximate function encoded in the amplitude of the qubit."""
+    def amp_encoding(self, params: ndarray) -> ndarray:
+        """Returns approximate function encoded in the amplitude of the qubit.
+
+        Parameters
+        ----------
+        params : ndarray
+            Parameters of the quantum gates in the layer.
+
+        Returns
+        -------
+        ndarray
+            Values of the amplitudes of the |0> qubit for each value of x.
+        """
         layers = params.size // self.params_layer
         params = params.reshape(layers, self.params_layer)
         U = self.layer(params[0, :])[:, :, 0]
@@ -95,18 +130,51 @@ class Circuit(ABC):
             U = np.einsum("gmn, gn -> gm", Ui, U)
         return U[:, 0]
 
-    def _prob_encoding(self, params: ndarray) -> ndarray:
-        """Returns approximate function encoded in the probability of the qubit."""
-        fn_amp = self._amp_encoding(params)
+    def prob_encoding(self, params: ndarray) -> ndarray:
+        """Returns approximate function encoded in the probability of the qubit.
+        s
+                Parameters
+                ----------
+                params : ndarray
+                    Parameters of the quantum gates in the layer.
+
+                Returns
+                -------
+                ndarray
+                    Values of the probabilities of the |0> qubit for each value of x.
+        """
+        fn_amp = self.amp_encoding(params)
         return fn_amp.real**2 + fn_amp.imag**2
 
     @abstractmethod
     def grad_layer(self, params: ndarray) -> ndarray:
-        """Returns the derivative of one layer with respect to its 4 parameters."""
+        """Returns the derivative of one layer with respect to its parameters.
+
+        Parameters
+        ----------
+        params : ndarray
+            Parameters of the quantum gates in the layer.
+
+        Returns
+        -------
+        ndarray
+            Values of the probabilities of the |0> qubit for each value of x.
+        """
         ...
 
-    def _grad_amp(self, params: ndarray) -> tuple[ndarray, ndarray]:
-        """Returns the gradient of the amplitude encoding and the encoded function."""
+    def grad_amp(self, params: ndarray) -> tuple[ndarray, ndarray]:
+        """Returns the gradient of the amplitude encoding and the encoded function.
+
+        Parameters
+        ----------
+        params : ndarray
+            Parameters of the quantum gates in the layer.
+
+        Returns
+        -------
+        tuple[ndarray, ndarray]
+            Gradients of the amplitude with respect to all parameters and the amplitudes for each x.
+        """
         layers = params.size // self.params_layer
         params = params.reshape(layers, self.params_layer)
         U = np.tensordot(np.ones(self.x.size), np.array([1, 0]), axes=0)  # dim (G,2)
@@ -136,9 +204,20 @@ class Circuit(ABC):
 
         return grad, fn_approx
 
-    def _grad_prob(self, params: ndarray) -> tuple[ndarray, ndarray]:
-        """Returns the gradient of the probability encoding and the probability encoding."""
-        grad_amp, amp = self._grad_amp(params)
+    def grad_prob(self, params: ndarray) -> tuple[ndarray, ndarray]:
+        """Returns the gradient of the probability encoding and the probability encoding.
+
+        Parameters
+        ----------
+        params : ndarray
+            Parameters of the quantum gates in the layer.
+
+        Returns
+        -------
+        tuple[ndarray, ndarray]
+            Gradients of the probability with respect to all parameters and the probability for each x.
+        """
+        grad_amp, amp = self.grad_amp(params)
         fn_approx = amp.real**2 + amp.imag**2
         grad_prob = 2 * np.real(np.einsum("g, gi -> gi", amp.conj(), grad_amp))
         return grad_prob, fn_approx
@@ -167,7 +246,7 @@ class CircuitRxRyRz(Circuit):
 
     def layer(self, params: ndarray) -> ndarray:
         """
-        Returns the layer of our circuit:
+        Returns the layer of the circuit:
         L = RX(x * w + θ0) RY(θ1) RZ(θ2)
 
         Parameters
@@ -196,7 +275,18 @@ class CircuitRxRyRz(Circuit):
         return np.einsum("mn, np, pqg -> gmq", RZ(θz), RY(θy), RX(w * self.x + θx))
 
     def grad_layer(self, params: ndarray) -> ndarray:
-        """Returns the derivative of one layer with respect to its 4 parameters."""
+        """Returns the derivative of one layer with respect to its 4 parameters.
+
+        Parameters
+        ----------
+        params : ndarray
+            Parameters of the quantum gates in the layer.
+
+        Returns
+        -------
+        ndarray
+            Gradient of the layer with respect to each parameter.
+        """
         w = params[0]
         θx = params[1]
         θy = params[2]
@@ -261,7 +351,18 @@ class CircuitRxRy(Circuit):
         return np.einsum("mng, np -> gmp", RY(w * self.x + θy), RX(θx))
 
     def grad_layer(self, params: ndarray) -> ndarray:
-        """Returns the derivative of one layer with respect to its 3 parameters."""
+        """Returns the derivative of one layer with respect to its 3 parameters.
+
+        Parameters
+        ----------
+        params : ndarray
+            Parameters of the quantum gates in the layer.
+
+        Returns
+        -------
+        ndarray
+            Gradient of the layer with respect to each parameter.
+        """
         w = params[0]
         θx = params[1]
         θy = params[2]
@@ -321,7 +422,18 @@ class CircuitRy(Circuit):
         return np.einsum("mng -> gmn", RY(w * self.x + θy))
 
     def grad_layer(self, params: ndarray) -> ndarray:
-        """Returns the derivative of one layer with respect to its 2 parameters."""
+        """Returns the derivative of one layer with respect to its 2 parameters.
+
+        Parameters
+        ----------
+        params : ndarray
+            Parameters of the quantum gates in the layer.
+
+        Returns
+        -------
+        ndarray
+            Gradient of the layer with respect to each parameter.
+        """
         w = params[0]
         θy = params[1]
         Dy = np.einsum("mng -> gmn", grad_RY(w * self.x + θy))

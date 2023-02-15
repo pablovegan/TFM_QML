@@ -17,6 +17,7 @@ from typing import Callable
 from abc import ABC, abstractmethod
 
 import numpy as np
+from numpy import ndarray
 
 from qubit_approximant.core.optimizer import Optimizer
 
@@ -61,9 +62,7 @@ class MultilayerOptimizer(ABC):
         self.new_layer_coef = new_layer_coef
 
     @abstractmethod
-    def __call__(
-        self, cost: Callable, grad_cost: Callable, init_params: np.ndarray
-    ) -> list[np.ndarray]:
+    def __call__(self, cost: Callable, grad_cost: Callable, init_params: ndarray) -> list[ndarray]:
         """
         Calculate the optimized parameters for each number of layers.
 
@@ -106,9 +105,7 @@ class NonIncrementalOptimizer(MultilayerOptimizer):
         """
         super().__init__(min_layer, max_layer, optimizer, new_layer_coef)
 
-    def __call__(
-        self, cost: Callable, grad_cost: Callable, init_params: np.ndarray
-    ) -> list[np.ndarray]:
+    def __call__(self, cost: Callable, grad_cost: Callable, init_params: ndarray) -> list[ndarray]:
         """
         Calculate the optimized parameters for each number of layers.
 
@@ -123,7 +120,7 @@ class NonIncrementalOptimizer(MultilayerOptimizer):
 
         Returns
         -------
-        list of ndarray
+        list[ndarray]
             The optimum parameters for each number of layers.
         """
         self.params_layer = init_params.size // self.min_layer
@@ -158,7 +155,7 @@ class IncrementalOptimizer(MultilayerOptimizer):
         optimizer: Optimizer,
         new_layer_coef: float,
         new_layer_position: str,
-    ):
+    ) -> None:
         """
         Initialize a black box optimizer.
 
@@ -186,24 +183,21 @@ class IncrementalOptimizer(MultilayerOptimizer):
             )
         super().__init__(min_layer, max_layer, optimizer, new_layer_coef)
 
-    def __call__(
-        self, cost: Callable, grad_cost: Callable, init_params: np.ndarray
-    ) -> list[np.ndarray]:
-        """
-        Calculate the optimized parameters for each number of layers.
+    def __call__(self, cost: Callable, grad_cost: Callable, init_params: ndarray) -> list[ndarray]:
+        """Calculate the optimized parameters for each number of layers.
 
         Parameters
         ----------
-        cost: Callable
+        cost : Callable
             Cost function to be minimized.
-        grad_cost: Callable
+        grad_cost : Callable
             Gradient of the cost function.
         init_params : ndarray
             Initial parameter guess for the cost function; used to initialize the optimizer.
 
         Returns
         -------
-        list of ndarray
+        list[ndarray]
             The optimum parameters for each number of layers.
         """
         self.params_layer = init_params.size // self.min_layer
@@ -216,7 +210,7 @@ class IncrementalOptimizer(MultilayerOptimizer):
             params = self._new_initial_params(params, layer)
         return self.params_list
 
-    def _new_initial_params(self, params: np.ndarray, current_layer: int) -> np.ndarray:
+    def _new_initial_params(self, params: ndarray, current_layer: int) -> ndarray:
         """Create new initial parameters from the optimized parameters
         with one layer less."""
 
@@ -239,7 +233,18 @@ class IncrementalOptimizer(MultilayerOptimizer):
         """Returns a list with the mean and standard deviation of the
         difference between the optimum parameters in the i-th layer
         and the optimum parameters of the (i+1)-th layer.
-        (We exclude the additional parameters added with the new layer)."""
+        (We exclude the additional parameters added with the new layer).
+
+        Returns
+        -------
+        tuple[list[float], list[float]]
+            Mean and standard deviation of the parameter differences.
+
+        Raises
+        ------
+        ValueError
+            Parameter difference only supported for new initial and final layers.
+        """
         mean_diff = []
         std_diff = []
 

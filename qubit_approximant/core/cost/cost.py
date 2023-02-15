@@ -21,10 +21,9 @@ class Cost:
         Quantum circuit that encodes our function.
     fn: ndarray
         Function we desire to approximate.
-
     """
 
-    def __init__(self, fn: ndarray, circuit: Circuit, metric_str: str):
+    def __init__(self, fn: ndarray, circuit: Circuit, metric_str: str) -> None:
         """
         Parameters
         ----------
@@ -34,6 +33,12 @@ class Cost:
             Quantum circuit that encodes our function.
         metric_str : str
             Name of the metric we want to use.
+            Allowed values are:
+                - 'mse' (mean square error)
+                - 'rmse' (root mean square error)
+                - 'mse_weighted' (mse weighted by fn)
+                - 'kl_divergence'
+                - 'log_cosh'.
         """
         try:
             self.metric = globals()[metric_str]
@@ -45,11 +50,33 @@ class Cost:
         self.fn = fn
 
     def __call__(self, params: ndarray) -> float:
-        """Evaluate the cost function given the parameters of the circuit."""
+        """Evaluate the cost function given the parameters of the circuit.
+
+        Parameters
+        ----------
+        params : ndarray
+            Parameters of the quantum gates in the layer.
+
+        Returns
+        -------
+        float
+            The value of the cost function for the chosen circuit and metric.
+        """
         fn_approx = self.circuit.encoding(params)
         return self.metric(self.fn, fn_approx)
 
     def grad(self, params: ndarray) -> ndarray:
-        """Return the gradient of the cost function."""
+        """Return the gradient of the cost function.
+
+        Parameters
+        ----------
+        params : ndarray
+            Parameters of the quantum gates in the layer.
+
+        Returns
+        -------
+        ndarray
+            Gradient of the cost.
+        """
         grad_fn_approx, fn_approx = self.circuit.grad_encoding(params)
         return self.grad_metric(self.fn, fn_approx, grad_fn_approx)

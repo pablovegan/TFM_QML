@@ -5,6 +5,24 @@ import scipy.integrate as integrate
 
 
 def l1_norm(fn: Callable, fn_approx: Callable, x_limits: tuple[float, float]) -> float:
+    """L1 norm of the difference of the given functions 'fn' and 'fn_approx'
+     in the interval given by (x_limits[0], x_limits[1]).
+
+    Parameters
+    ----------
+    fn : Callable
+        Function we want to approximate.
+    fn_approx : Callable
+        Approximation to the function.
+    x_limits : tuple[float, float]
+        Limits of the integration interval to estimate the L1 norm of the difference
+        between the function and the approximation.
+
+    Returns
+    -------
+    float
+        Value of the L1 norm (it is an integral).
+    """
     diff_l1 = lambda x: np.abs(fn(x) - fn_approx(x))  # noqa
     return integrate.quad(diff_l1, x_limits[0], x_limits[1], limit=300)[0]
 

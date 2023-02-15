@@ -41,3 +41,8 @@ disable = [
     "unexpected-special-method-signature",
     "non-ascii-name",
 ]
+
+[project]
+dependencies = [
+    "mkdocstrings[python]>=0.18",
+]

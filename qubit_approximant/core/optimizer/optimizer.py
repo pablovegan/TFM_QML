@@ -141,12 +141,12 @@ class GDOptimizer(Optimizer):
 
         Parameters
         ----------
-        cost_fn: Callable
+        cost : Callable
             Cost function to be minimized.
-        params: ndarray
+        grad_cost : Callable
+            Gradient of the cost function.
+        params : ndarray
             Initial parameter guess for the cost function; used to initialize the optimizer.
-        iter: int
-            Number of iterations of gradient descent to perform.
 
         Returns
         -------
