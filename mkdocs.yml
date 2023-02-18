@@ -7,8 +7,7 @@ watch: [README.md, qubit_approximant]
 
 
 nav:
-  - Start:
-    - index.md
+  - Start: README.md
   - API documentation: reference/
 
 theme:
