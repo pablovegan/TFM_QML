@@ -21,3 +21,7 @@ mkdocstrings[python]
 mkdocs-material
 Pygments
 python-markdown-math
+mkdocs-gen-files
+mkdocs-literate-nav
+mkdocs-section-index
+mkdocs-same-dir

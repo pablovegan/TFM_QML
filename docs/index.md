@@ -1,3 +1,1 @@
-# Qubit approximant
-
-Approximate a function with a single qubit.
+--8<-- "README.md"
