@@ -5,3 +5,4 @@ pandas
 dill
 pathos
 mpi4py
+pennylane
