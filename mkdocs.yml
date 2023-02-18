@@ -35,7 +35,6 @@ theme:
         name: Switch to light mode
 
 plugins:
-  - markdown-exec
   - search
   - same-dir
   - autorefs
