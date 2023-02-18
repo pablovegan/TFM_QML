@@ -1,5 +1,8 @@
+import matplotlib.pyplot as plt
+
+
 def box_plot_errores(layer_list, cost_array, function):
-    # plot
+    """Create a box plot for the seeds and metrics."""
     fig, ax = plt.subplots(1, 2, figsize=(12, 6))
     ax[0].boxplot(
         cost_array,
