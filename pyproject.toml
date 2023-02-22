@@ -3,46 +3,11 @@ line-length = 100
 skip-string-normalization = false
 skip-magic-trailing-comma = true
 
-[tool.pylint.messages_control]
-disable = [
-    "trailing-whitespace",
-    "invalid-name",
-    "arguments-differ",
-    "attribute-defined-outside-init",
-    "bad-continuation",
-    "blacklisted-name",
-    "duplicate-code",
-    "fixme",
-    "import-error",
-    "no-member",
-    "no-name-in-module",
-    "no-self-use",
-    "protected-access",
-    "stop-iteration-return",
-    "too-few-public-methods",
-    "too-many-arguments",
-    "too-many-branches",
-    "too-many-instance-attributes",
-    "too-many-lines",
-    "too-many-locals",
-    "too-many-return-statements",
-    "too-many-statements",
-    "abstract-method",
-    "chained-comparison",
-    "eval-used",
-    "exec-used",
-    "expression-not-assigned",
-    "global-statement",
-    "missing-docstring",
-    "redefined-argument-from-local",
-    "redefined-outer-name",
-    "reimported",
-    "too-many-ancestors",
-    "unexpected-special-method-signature",
-    "non-ascii-name",
-]
+[build-system]
+requires = ["setuptools>=45.0", "setuptools_scm[toml]>=6.3.1", "wheel"]
+build-backend = "setuptools.build_meta"
 
-[project]
-dependencies = [
-    "mkdocstrings[python]>=0.18",
+[tool.pytest.ini_options]
+testpaths = [
+    "tests"
 ]
