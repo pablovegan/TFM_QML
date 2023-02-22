@@ -13,6 +13,8 @@ mypy
 isort
 black
 pre-commit
+twine
+check-manifest
 
 # Documentation
 mkdocs
