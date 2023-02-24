@@ -9,7 +9,7 @@ nav = mkdocs_gen_files.Nav()
 main_project = "qubit_approximant"
 
 for path in sorted(Path(main_project).rglob("*.py")):
-    
+
     module_path = path.relative_to("").with_suffix("")
     doc_path = path.relative_to(main_project).with_suffix(".md")
     full_doc_path = Path("reference", doc_path)
