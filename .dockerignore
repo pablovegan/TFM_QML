@@ -23,4 +23,12 @@
 **/obj
 **/secrets.dev.yaml
 **/values.dev.yaml
+.github
+.mypy_cache
+.pytest_cache
 README.md
+build
+dist
+site
+docs
+qubit_approximant.egg-info
