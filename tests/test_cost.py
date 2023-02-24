@@ -12,7 +12,7 @@ params = 0.3 * np.random.randn(4 * 6)
 
 
 @pytest.mark.parametrize(
-    ("x", "fn", "encoding_str", "metric_str", "params"),
+    ("x", "fn", "encoding", "metric", "params"),
     (
         (x, fn, "amp", "mse", params),
         (x, fn, "prob", "mse", params),
@@ -25,10 +25,10 @@ params = 0.3 * np.random.randn(4 * 6)
     ),
 )
 def test_grad_CircuitRxRyRz(
-    x: np.ndarray, fn: np.ndarray, encoding_str: str, metric_str: str, params: np.ndarray
+    x: np.ndarray, fn: np.ndarray, encoding: str, metric: str, params: np.ndarray
 ) -> None:
-    circuit = CircuitRxRyRz(x=x, encoding_str=encoding_str)
-    cost = Cost(fn, circuit, metric_str=metric_str)
+    circuit = CircuitRxRyRz(x=x, encoding=encoding)
+    cost = Cost(fn, circuit, metric=metric)
     assert (g := check_grad(cost, cost.grad, params)) < 1e-5, f"Check_grad = {g}"
 
 
@@ -36,7 +36,7 @@ params = 0.3 * np.random.randn(3 * 6)
 
 
 @pytest.mark.parametrize(
-    ("x", "fn", "encoding_str", "metric_str", "params"),
+    ("x", "fn", "encoding", "metric", "params"),
     (
         (x, fn, "amp", "mse", params),
         (x, fn, "prob", "mse", params),
@@ -49,10 +49,10 @@ params = 0.3 * np.random.randn(3 * 6)
     ),
 )
 def test_grad_CircuitRxRy(
-    x: np.ndarray, fn: np.ndarray, encoding_str: str, metric_str: str, params: np.ndarray
+    x: np.ndarray, fn: np.ndarray, encoding: str, metric: str, params: np.ndarray
 ) -> None:
-    circuit = CircuitRxRy(x=x, encoding_str=encoding_str)
-    cost = Cost(fn, circuit, metric_str=metric_str)
+    circuit = CircuitRxRy(x=x, encoding=encoding)
+    cost = Cost(fn, circuit, metric=metric)
     assert (g := check_grad(cost, cost.grad, params)) < 1e-5, f"Check_grad = {g}"
 
 
@@ -60,7 +60,7 @@ params = 0.3 * np.random.randn(2 * 6)
 
 
 @pytest.mark.parametrize(
-    ("x", "fn", "encoding_str", "metric_str", "params"),
+    ("x", "fn", "encoding", "metric", "params"),
     (
         (x, fn, "amp", "mse", params),
         (x, fn, "prob", "mse", params),
@@ -73,8 +73,8 @@ params = 0.3 * np.random.randn(2 * 6)
     ),
 )
 def test_grad_CircuitRy(
-    x: np.ndarray, fn: np.ndarray, encoding_str: str, metric_str: str, params: np.ndarray
+    x: np.ndarray, fn: np.ndarray, encoding: str, metric: str, params: np.ndarray
 ) -> None:
-    circuit = CircuitRy(x=x, encoding_str=encoding_str)
-    cost = Cost(fn, circuit, metric_str=metric_str)
+    circuit = CircuitRy(x=x, encoding=encoding)
+    cost = Cost(fn, circuit, metric=metric)
     assert (g := check_grad(cost, cost.grad, params)) < 1e-5, f"Check_grad = {g}"

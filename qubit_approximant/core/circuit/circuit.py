@@ -45,13 +45,13 @@ class Circuit(ABC):
 
     __slots__ = "encoding", "grad", "params_layer", "__dict__"
 
-    def __init__(self, x: ndarray, encoding_str: str, params_layer: int):
+    def __init__(self, x: ndarray, encoding: str, params_layer: int):
         """
         Parameters
         ----------
         x: ndarray
             Values where to evaluate the function encoded in the circuit.
-        encoding_str : str
+        encoding : str
             Choose between amplitude or probability encoding.
             Must be either 'amp' or 'prob'.
         params_layer : int
@@ -59,10 +59,10 @@ class Circuit(ABC):
         """
         self.x = x
 
-        if encoding_str == "prob":
+        if encoding == "prob":
             self.encoding = self.prob_encoding
             self.grad_encoding = self.grad_prob
-        elif encoding_str == "amp":
+        elif encoding == "amp":
             self.encoding = self.amp_encoding
             self.grad_encoding = self.grad_amp
         else:
@@ -231,18 +231,18 @@ class CircuitRxRyRz(Circuit):
     L = RX(x * w + θx) RY(θy) RZ(θz)
     """
 
-    def __init__(self, x: ndarray, encoding_str: str):
+    def __init__(self, x: ndarray, encoding: str):
         """
         Parameters
         ----------
         x: ndarray
             The values where we wish to approximate a function.
-        encoding_str: str
+        encoding: str
             Choose between amplitude or probability encoding.
             Must be either 'amp' or 'prob'.
         """
         self.params_layer = 4
-        super().__init__(x, encoding_str, self.params_layer)
+        super().__init__(x, encoding, self.params_layer)
 
     def layer(self, params: ndarray) -> ndarray:
         """
@@ -308,7 +308,7 @@ class CircuitRxRy(Circuit):
     L = RX(θx) RY(w * x + θy)
     """
 
-    def __init__(self, x: ndarray, encoding_str: str):
+    def __init__(self, x: ndarray, encoding: str):
         """
         Parameters
         ----------
@@ -319,7 +319,7 @@ class CircuitRxRy(Circuit):
             Must be either 'amp' or 'prob'.
         """
         self.params_layer = 3
-        super().__init__(x, encoding_str, self.params_layer)
+        super().__init__(x, encoding, self.params_layer)
 
     def layer(self, params: ndarray) -> ndarray:
         """
@@ -380,18 +380,18 @@ class CircuitRy(Circuit):
     L = RY(w * x + θy)
     """
 
-    def __init__(self, x: ndarray, encoding_str: str):
+    def __init__(self, x: ndarray, encoding: str):
         """
         Parameters
         ----------
         x: ndarray
             The values where we wish to approximate a function.
-        encoding_str: str
+        encoding: str
             Choose between amplitude or probability encoding.
             Must be either 'amp' or 'prob'.
         """
         self.params_layer = 2
-        super().__init__(x, encoding_str, self.params_layer)
+        super().__init__(x, encoding, self.params_layer)
 
     def layer(self, params: ndarray) -> ndarray:
         """

@@ -23,7 +23,7 @@ class Cost:
         Function we desire to approximate.
     """
 
-    def __init__(self, fn: ndarray, circuit: Circuit, metric_str: str) -> None:
+    def __init__(self, fn: ndarray, circuit: Circuit, metric: str) -> None:
         """
         Parameters
         ----------
@@ -31,7 +31,7 @@ class Cost:
             Function we desire to approximate.
         circuit : Circuit
             Quantum circuit that encodes our function.
-        metric_str : str
+        metric : str
             Name of the metric we want to use.
             Allowed values are:
                 - 'mse' (mean square error)
@@ -41,8 +41,8 @@ class Cost:
                 - 'log_cosh'.
         """
         try:
-            self.metric = globals()[metric_str]
-            self.grad_metric = globals()["grad_" + metric_str]
+            self.metric = globals()[metric]
+            self.grad_metric = globals()["grad_" + metric]
         except KeyError:
             raise ValueError("Invalid metric '{metric}'. Choose between 'MSE' or 'RMSE'.")
 

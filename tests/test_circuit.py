@@ -34,7 +34,7 @@ def test_encoding_CircuitRxRyRz(x: np.ndarray, params: np.ndarray):
         pennylane_list.append(pennylane_circuit(x_point, params)[0])
     pennylane_list = np.array(pennylane_list)  # type: ignore
 
-    circuit = CircuitRxRyRz(x=x, encoding_str="amp")
+    circuit = CircuitRxRyRz(x=x, encoding="amp")
     assert_allclose(
         circuit.encoding(params),
         pennylane_list,
@@ -53,7 +53,7 @@ def test_encoding_CircuitRxRyRz(x: np.ndarray, params: np.ndarray):
     ),
 )
 def test_grad_layer(circuit_class: Type[Circuit], x: np.ndarray, params: np.ndarray):
-    circuit = circuit_class(x=x, encoding_str="amp")  # type: ignore
+    circuit = circuit_class(x=x, encoding="amp")  # type: ignore
     δ = 0.000001
     params_shifted = params.copy()
     params_shifted[1] += δ
@@ -74,7 +74,7 @@ layers = np.random.randint(1, 12)
     ),
 )
 def test_grad_prob_encoding(circuit_class: Type[Circuit], x: np.ndarray, params: np.ndarray):
-    circuit = circuit_class(x=x, encoding_str="prob")  # type: ignore
+    circuit = circuit_class(x=x, encoding="prob")  # type: ignore
 
     def fun(params):
         return np.sum(circuit.encoding(params))

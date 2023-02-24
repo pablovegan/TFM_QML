@@ -20,7 +20,7 @@ optimizer = BlackBoxOptimizer(method="L-BFGS-B")
 
 
 @pytest.mark.parametrize(
-    ("circuit", "metric_str", "params", "new_layer_position", "tol"),
+    ("circuit", "metric", "params", "new_layer_position", "tol"),
     (
         (CircuitRxRyRz(x, "prob"), "mse", np.random.randn(4 * min_layer), "initial", 1e-4),
         (CircuitRxRyRz(x, "prob"), "mse", np.random.randn(4 * min_layer), "final", 1e-4),
@@ -29,9 +29,9 @@ optimizer = BlackBoxOptimizer(method="L-BFGS-B")
     ),
 )
 def test_incremental_optimizer(
-    circuit: Circuit, metric_str: str, params: np.ndarray, new_layer_position: str, tol: float
-):
-    cost = Cost(fn, circuit, metric_str=metric_str)
+    circuit: Circuit, metric: str, params: np.ndarray, new_layer_position: str, tol: float
+) -> None:
+    cost = Cost(fn, circuit, metric=metric)
     multilayer_opt = IncrementalOptimizer(min_layer, max_layer, optimizer, 0.3, new_layer_position)
     params_list = multilayer_opt(cost, cost.grad, params)
     for i, params in enumerate(params_list):
@@ -42,16 +42,16 @@ def test_incremental_optimizer(
 
 
 @pytest.mark.parametrize(
-    ("circuit", "metric_str", "params", "tol"),
+    ("circuit", "metric", "params", "tol"),
     (
         (CircuitRxRyRz(x, "prob"), "mse", np.random.randn(4 * min_layer), 1e-4),
         (CircuitRxRyRz(x, "prob"), "rmse", np.random.randn(4 * min_layer), 5e-3),
     ),
 )
 def test_nonincremental_optimizer(
-    circuit: Circuit, metric_str: str, params: np.ndarray, tol: float
-):
-    cost = Cost(fn, circuit, metric_str=metric_str)
+    circuit: Circuit, metric: str, params: np.ndarray, tol: float
+) -> None:
+    cost = Cost(fn, circuit, metric=metric)
     min_layer = 6
     max_layer = 8
     multilayer_opt = NonIncrementalOptimizer(min_layer, max_layer, optimizer, 0.3)
