@@ -1,13 +1,16 @@
 # QubitApproximant
 
+[![GitHub release](https://img.shields.io/github/release/pablovegan/qubitapproximant.svg)](https://github.com/pablovegan/qubitapproximant/releases/latest)
 [![documentation](https://img.shields.io/badge/docs-mkdocs%20material-blue.svg?style=flat)](https://pablovegan.github.io/QubitApproximant/)
 [![pypi version](https://img.shields.io/pypi/v/qubit-approximant.svg)](https://pypi.org/project/qubit-approximant/)
-[![GitHub release](https://img.shields.io/github/release/pablovegan/qubitapproximant.svg)](https://github.com/pablovegan/qubitapproximant/releases/latest)
 [![black](https://img.shields.io/badge/code%20style-black-black)](https://github.com/psf/black)
 [![Tests](https://github.com/pablovegan/QubitApproximant/actions/workflows/tests.yml/badge.svg)](https://github.com/pablovegan/QubitApproximant/actions/workflows/tests.yml)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 A `python` package for approximating quantum circuits with a single qubit.
+
+
+![alt text](/examples/gaussian.png)
 
 ## Documentation and examples
 Documentation created with `mkocs` can be found in https://pablovegan.github.io/QubitApproximant/.
@@ -49,7 +52,7 @@ To find the optimum parameters of the circuit, we need to choose a cost function
 ```python
 from qubit_approximant.core import Cost
 
-cost = Cost(fn, circuit, metric_str='mse')
+cost = Cost(fn, circuit, metric='mse')
 ```
 
 ### Optimizer
@@ -107,18 +110,21 @@ import numpy as np
 
 from qubit_approximant.benchmarking.functions import gaussian
 from qubit_approximant.core import CircuitRxRyRz, Cost, BlackBoxOptimizer, LayerwiseOptimizer
+from qubit_approximant.benchmarking import metric_results
 
 x = np.linspace(-2.5, 2.5, 1000)
 fn_kwargs = {'mean': 0.0, 'std': 0.5, 'coef': 1}
 fn = gaussian(x, **fn_kwargs)
 
 circuit = CircuitRxRyRz(x, encoding='prob')
-cost = Cost(fn, circuit, metric_str='mse')
+cost = Cost(fn, circuit, metric='mse')
 optimizer = BlackBoxOptimizer(method="L-BFGS-B")
 
+min_layer = 3
+init_params = np.random.randn(4 * min_layer)
 layerwise_opt = LayerwiseOptimizer(
     optimizer,
-    min_layer=3,
+    min_layer=min_layer,
     max_layer=7,
     new_layer_coef=0.3,
     new_layer_position='random'
@@ -126,12 +132,29 @@ layerwise_opt = LayerwiseOptimizer(
 params_list = layerwise_opt(cost, cost.grad, init_params)
 
 l1_list, l2_list, inf_list, infidelity_list = metric_results(
-    params_list,
-    circuit,
-    fn = gaussian,
-    fn_kwargs = {'mean': 0.0, 'std': 0.5, 'coef': 1}
+    fn=gaussian,
+    fn_kwargs={'mean': 0.0, 'std': 0.5, 'coef': 1},
+    circuit=circuit,
+    params_list=params_list
     )
 ```
+
+## Bonus: benchmarking multiple initial parameters
+
+The initial paramenters for the optimizer are generated at random with a ``seed`` of our choice. We can benchmark the optimizer against multiple seeds (since it is a time consuming task it is parallelized using ``mpi``).
+
+```python
+benchmark_seeds(
+    num_seeds = 4,
+    fn = gaussian,
+    fn_kwargs = fn_kwargs,
+    circuit = circuit,
+    cost = cost,
+    optimizer = multilayer_opt,
+    filename = "results",
+)
+```
+
 
 ## References
 
