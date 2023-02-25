@@ -13,7 +13,7 @@ A `python` package for approximating quantum circuits with a single qubit.
 ![alt text](/examples/gaussian.png)
 
 ## Documentation and examples
-Documentation created with `mkocs` can be found in https://pablovegan.github.io/QubitApproximant/.
+Documentation created with `mkdocs` can be found in https://pablovegan.github.io/QubitApproximant/.
 
 ## Installation
 
@@ -139,7 +139,7 @@ l1_list, l2_list, inf_list, infidelity_list = metric_results(
     )
 ```
 
-## Bonus: benchmarking multiple initial parameters
+### Bonus: benchmarking multiple initial parameters
 
 The initial paramenters for the optimizer are generated at random with a ``seed`` of our choice. We can benchmark the optimizer against multiple seeds (since it is a time consuming task it is parallelized using ``mpi``).
 
