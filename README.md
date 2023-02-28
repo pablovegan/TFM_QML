@@ -1,9 +1,8 @@
 # QubitApproximant
 
-[![GitHub release](https://img.shields.io/github/release/pablovegan/qubitapproximant.svg)](https://github.com/pablovegan/qubitapproximant/releases/latest)
 [![documentation](https://img.shields.io/badge/docs-mkdocs%20material-blue.svg?style=flat)](https://pablovegan.github.io/QubitApproximant/)
 [![pypi version](https://img.shields.io/pypi/v/qubit-approximant.svg)](https://pypi.org/project/qubit-approximant/)
-[![black](https://img.shields.io/badge/code%20style-black-black)](https://github.com/psf/black)
+[![GitHub release](https://img.shields.io/github/release/pablovegan/qubitapproximant.svg)](https://github.com/pablovegan/qubitapproximant/releases/latest)[![black](https://img.shields.io/badge/code%20style-black-black)](https://github.com/psf/black)
 [![Tests](https://github.com/pablovegan/QubitApproximant/actions/workflows/tests.yml/badge.svg)](https://github.com/pablovegan/QubitApproximant/actions/workflows/tests.yml)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
