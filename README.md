@@ -46,7 +46,7 @@ circuit = CircuitRxRyRz(x, encoding='prob')
 ```
 
 ### Cost function
-To find the optimum parameters of the circuit, we need to choose a cost function. This can be done with the ``Cost`` class, where we input the function to approximate, the circuit ansatz and a metric to quantify the error in the approximation (options are ``'mse'``, ``'rmse'``, )
+To find the optimum parameters of the circuit, we need to choose a cost function. This can be done with the ``Cost`` class, where we input the function to approximate, the circuit ansatz and a metric to quantify the error in the approximation (options are ``'mse'``, ``'rmse'``, ```mse_weighted``, ``kl_divergence`` or ``log_cosh``)
 
 ```python
 from qubit_approximant.core import Cost
