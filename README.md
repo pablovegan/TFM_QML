@@ -72,7 +72,7 @@ opt_params = optimizer(cost, cost.grad, init_params)
 ```
 
 ### Multilayer optimizer
-We may also optimize an ansatz for multiple layers using the ``LayerwiseOptimizer```, which uses the optimum parameters for a circuit with $L$ layers as initial parameters for the optimization of a circuit with $L+1$ layers. A list with the optimum parameters for each layer is returned.
+We may also optimize an ansatz for multiple layers using the ``LayerwiseOptimizer``, which uses the optimum parameters for a circuit with $L$ layers as initial parameters for the optimization of a circuit with $L+1$ layers. A list with the optimum parameters for each layer is returned.
 
 ```python
 from qubit_approximant.core import LayerwiseOptimizer
