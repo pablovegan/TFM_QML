@@ -37,7 +37,7 @@ fn = gaussian(x, **fn_kwargs)
 ```
 
 ### Creating a circuit
-To create a circuit just choose the ansaz (``CircuitRxRyRz``, ``CircuitRxRy`` or ``CircuitRy``) and the encoding (``'prob'`` or ``"'amp'``).
+To create a circuit just choose the ansaz (``CircuitRxRyRz``, ``CircuitRxRy`` or ``CircuitRy``) and the encoding (``'prob'`` or ``'amp'``).
 
 ```python
 from qubit_approximant.core import CircuitRxRyRz
