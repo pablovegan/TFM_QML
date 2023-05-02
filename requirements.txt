@@ -1,8 +1,8 @@
 # Runtime requirements
-mpi4py
 numpy
 scipy
 pandas
 dill
 pathos
 pennylane
+mpi4py
