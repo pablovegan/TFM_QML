@@ -3,17 +3,15 @@
 from typing import Optional
 
 import numpy as np
-from numpy import ndarray
+from numpy.typing import NDArray
 
 
-def gaussian(
-    x: ndarray, mean: float = 0.0, std: float = 1, coef: Optional[float] = None
-) -> ndarray:
+def gaussian(x: NDArray, mean: float = 0.0, std: float = 1, coef: Optional[float] = None) -> NDArray:
     """Return a gaussian function.
 
     Parameters
     ----------
-    x : ndarray
+    x : NDArray
         Grid in which to approximate the function.
     mean : float, optional
         Mean of the gaussian, by default 0.0
@@ -24,7 +22,7 @@ def gaussian(
 
     Returns
     -------
-    ndarray
+    NDArray
         Values of the gaussian at each point.
     """
     if coef is None:
@@ -32,12 +30,12 @@ def gaussian(
     return coef * np.exp(-((x - mean) ** 2) / (2 * std**2))
 
 
-def lorentzian(x: ndarray, x0: float = 0.0, gamma: float = 1.0) -> ndarray:
+def lorentzian(x: NDArray, x0: float = 0.0, gamma: float = 1.0) -> NDArray:
     """Return a lorentzian function.
 
     Parameters
     ----------
-    x : ndarray
+    x : NDArray
         Grid in which to approximate the function.
     x0 : float, optional
         Shift x by this value, by default 0.0
@@ -46,18 +44,18 @@ def lorentzian(x: ndarray, x0: float = 0.0, gamma: float = 1.0) -> ndarray:
 
     Returns
     -------
-    ndarray
+    NDArray
         Values of the lorentzian at each point.
     """
     return 1 / np.pi * gamma / ((x - x0) ** 2 + gamma**2)
 
 
-def sine(x: ndarray, a: float = 1.0, b: float = 0.0) -> ndarray:
+def sine(x: NDArray, a: float = 1.0, b: float = 0.0) -> NDArray:
     """Return a sine function.
 
     Parameters
     ----------
-    x : ndarray
+    x : NDArray
         Grid in which to approximate the function.
     a : float, optional
         Weight of x in the sine, by default 1.0
@@ -66,18 +64,18 @@ def sine(x: ndarray, a: float = 1.0, b: float = 0.0) -> ndarray:
 
     Returns
     -------
-    ndarray
+    NDArray
         Values of the sine at each point.
     """
     return np.sin(a * x + b)
 
 
-def step(x: ndarray, b: float = 0.0, coef: float = 1.0) -> ndarray:
+def step(x: NDArray, b: float = 0.0, coef: float = 1.0) -> NDArray:
     """Return a step function.
 
     Parameters
     ----------
-    x : ndarray
+    x : NDArray
         Grid in which to approximate the function.
     b : float, optional
         Shift of x, by default 0.0
@@ -86,26 +84,26 @@ def step(x: ndarray, b: float = 0.0, coef: float = 1.0) -> ndarray:
 
     Returns
     -------
-    ndarray
+    NDArray
         Values of the step function at each point.
     """
     return coef * np.heaviside(x, b)
 
 
-def relu(x: ndarray, a: float = 1.0) -> ndarray:
+def relu(x: NDArray, a: float = 1.0) -> NDArray:
     r"""Return a relu function
         $$f(x) = \max(0, a \cdot x)$$
 
     Parameters
     ----------
-    x : ndarray
+    x : NDArray
         Grid in which to approximate the function.
     a : float, optional
         Weight of x, by default 1.0
 
     Returns
     -------
-    ndarray
+    NDArray
         Values of the relu function at each point.
 
     Raises
@@ -118,12 +116,12 @@ def relu(x: ndarray, a: float = 1.0) -> ndarray:
     return np.maximum(0, a * x)
 
 
-def tanh(x: ndarray, a: float = 5.0, coef=1.0) -> ndarray:
+def tanh(x: NDArray, a: float = 5.0, coef=1.0) -> NDArray:
     """Return a hyperbolic tangent
 
     Parameters
     ----------
-    x : ndarray
+    x : NDArray
         Grid in which to approximate the function.
     a : float, optional
         Weight of x, by default 5.0
@@ -132,27 +130,27 @@ def tanh(x: ndarray, a: float = 5.0, coef=1.0) -> ndarray:
 
     Returns
     -------
-    ndarray
+    NDArray
         Values of the relu function at each point.
     """
     return coef * np.tanh(a * x)
 
 
-def poly(x: ndarray) -> ndarray:
+def poly(x: NDArray) -> NDArray:
     """Return 4th order a polynomial
 
     Parameters
     ----------
-    x : ndarray
+    x : NDArray
         Grid in which to approximate the function.
 
     Returns
     -------
-    ndarray
+    NDArray
         Values of the relu function at each point.
     """
     return np.abs((1 - x**4) * 3 * x**3)
 
 
-def cos2_sin2(x: ndarray, a: float = 1.0, b: float = 0.0) -> ndarray:
+def cos2_sin2(x: NDArray, a: float = 1.0, b: float = 0.0) -> NDArray:
     return np.cos(a * x + b) ** 2 - np.sin(a * x + b) ** 2

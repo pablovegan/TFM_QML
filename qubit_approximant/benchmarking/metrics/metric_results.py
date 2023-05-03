@@ -1,13 +1,14 @@
 from typing import Callable, Tuple
 
 import numpy as np
+from numpy.typing import NDArray
 
 from qubit_approximant import Circuit
 from .metrics import l2_norm, l1_norm, inf_norm, infidelity
 
 
 def metric_results(
-    fn: Callable, fn_kwargs: dict, circuit: Circuit, params_list: list[np.ndarray]
+    fn: Callable, fn_kwargs: dict, circuit: Circuit, params_list: list[NDArray]
 ) -> Tuple[list[float], ...]:
     """Returns 4 lists of error metrics, one for each layer. The metrics are:
         - L1 norm
@@ -23,7 +24,7 @@ def metric_results(
         Keyword arguments for 'fn'.
     circuit : Circuit
         Circuit used to model 'fn'.
-    params_list : list[np.ndarray]
+    params_list : list[NDArray]
         List of parameters for the circuit with different number of layers.
 
     Returns

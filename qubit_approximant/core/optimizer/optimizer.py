@@ -16,7 +16,8 @@ AdamOptimizer:
 from abc import ABC, abstractmethod
 from typing import Callable
 
-from numpy import ndarray, zeros_like, sqrt
+from numpy import zeros_like, sqrt
+from numpy.typing import NDArray
 from scipy.optimize import minimize
 
 
@@ -26,7 +27,7 @@ class Optimizer(ABC):
     __slots__ = "__dict__"
 
     @abstractmethod
-    def __call__(self, cost: Callable, grad_cost: Callable, init_params: ndarray) -> ndarray:
+    def __call__(self, cost: Callable, grad_cost: Callable, init_params: NDArray) -> NDArray:
         """
         Calculate the optimized parameters.
 
@@ -36,12 +37,12 @@ class Optimizer(ABC):
             Cost function to be minimized.
         grad_cost: Callable
             Gradient of the cost function.
-        init_params : ndarray
+        init_params : NDArray
             Initial parameter guess for the cost function; used to initialize the optimizer.
 
         Returns
         -------
-        ndarray
+        NDArray
             Optimum parameters
         """
         ...
@@ -83,7 +84,7 @@ class BlackBoxOptimizer(Optimizer):
         else:
             raise ValueError(f"Optimization {method} is not supported.")
 
-    def __call__(self, cost: Callable, grad_cost: Callable, init_params: ndarray) -> ndarray:
+    def __call__(self, cost: Callable, grad_cost: Callable, init_params: NDArray) -> NDArray:
         """
         Calculate the optimized parameters using `scipy.optimize.minimize()`.
 
@@ -93,12 +94,12 @@ class BlackBoxOptimizer(Optimizer):
             Cost function to be minimized.
         grad_cost: Callable
             Gradient of the cost function.
-        init_params : ndarray
+        init_params : NDArray
             Initial parameter guess for the cost function; used to initialize the optimizer.
 
         Returns
         -------
-        ndarray
+        NDArray
             Optimum parameters
         """
         result = minimize(
@@ -135,7 +136,7 @@ class GDOptimizer(Optimizer):
         """In case we want to update the number of iterations."""
         self._iters = new_iters
 
-    def __call__(self, cost: Callable, grad_cost: Callable, params: ndarray) -> ndarray:
+    def __call__(self, cost: Callable, grad_cost: Callable, params: NDArray) -> NDArray:
         """
         Calculate the optimized parameters using a number of gradient descent iterations.
 
@@ -145,12 +146,12 @@ class GDOptimizer(Optimizer):
             Cost function to be minimized.
         grad_cost : Callable
             Gradient of the cost function.
-        params : ndarray
+        params : NDArray
             Initial parameter guess for the cost function; used to initialize the optimizer.
 
         Returns
         -------
-        ndarray
+        NDArray
             Optimum parameters
         """
         min_cost = 100000
@@ -166,7 +167,7 @@ class GDOptimizer(Optimizer):
 
         return min_params
 
-    def step(self, grad_cost: Callable, params: ndarray) -> ndarray:
+    def step(self, grad_cost: Callable, params: NDArray) -> NDArray:
         """Update the parameters with a step of Gradient Descent."""
         params = params - grad_cost(params) * self.step_size
         return params
@@ -224,7 +225,7 @@ class AdamOptimizer(GDOptimizer):
         self.eps = eps
         super().__init__(iters, step_size)
 
-    def step(self, grad_cost: Callable, params: ndarray) -> ndarray:
+    def step(self, grad_cost: Callable, params: NDArray) -> NDArray:
         """Update the parameters with a step of Adam. Adam changes the step size in each iteration."""
         m = zeros_like(params)
         v = zeros_like(params)

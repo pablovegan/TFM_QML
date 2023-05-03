@@ -1,6 +1,6 @@
 """Cost function to use in our optimizer."""
 
-from numpy import ndarray
+from numpy.typing import NDArray
 
 from qubit_approximant.core import Circuit
 from ._cost_metrics import *  # noqa
@@ -19,15 +19,15 @@ class Cost:
         The gradient of the metric or loss function.
     circuit: Circuit
         Quantum circuit that encodes our function.
-    fn: ndarray
+    fn: NDArray
         Function we desire to approximate.
     """
 
-    def __init__(self, fn: ndarray, circuit: Circuit, metric: str) -> None:
+    def __init__(self, fn: NDArray, circuit: Circuit, metric: str) -> None:
         """
         Parameters
         ----------
-        fn : ndarray
+        fn : NDArray
             Function we desire to approximate.
         circuit : Circuit
             Quantum circuit that encodes our function.
@@ -49,12 +49,12 @@ class Cost:
         self.circuit = circuit
         self.fn = fn
 
-    def __call__(self, params: ndarray) -> float:
+    def __call__(self, params: NDArray) -> float:
         """Evaluate the cost function given the parameters of the circuit.
 
         Parameters
         ----------
-        params : ndarray
+        params : NDArray
             Parameters of the quantum gates in the layer.
 
         Returns
@@ -65,17 +65,17 @@ class Cost:
         fn_approx = self.circuit.encoding(params)
         return self.metric(self.fn, fn_approx)
 
-    def grad(self, params: ndarray) -> ndarray:
+    def grad(self, params: NDArray) -> NDArray:
         """Return the gradient of the cost function.
 
         Parameters
         ----------
-        params : ndarray
+        params : NDArray
             Parameters of the quantum gates in the layer.
 
         Returns
         -------
-        ndarray
+        NDArray
             Gradient of the cost.
         """
         grad_fn_approx, fn_approx = self.circuit.grad_encoding(params)
