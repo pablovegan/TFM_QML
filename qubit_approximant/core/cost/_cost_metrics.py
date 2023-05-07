@@ -22,9 +22,7 @@ def mse_weighted(fn: NDArray, fn_approx: NDArray) -> float:
     return np.mean(fn * np.absolute(fn_diff) ** 2)
 
 
-def grad_mse_weighted(
-    fn: NDArray, fn_approx: NDArray, grad_fn_approx: NDArray
-) -> NDArray:
+def grad_mse_weighted(fn: NDArray, fn_approx: NDArray, grad_fn_approx: NDArray) -> NDArray:
     """Returns the gradient of the weighted minimum square error."""
     fn_diff = fn_approx - fn
     return (
@@ -50,9 +48,7 @@ def kl_divergence(fn: NDArray, fn_approx: NDArray) -> float:
     return np.mean(fn * np.log(fn_approx / fn))
 
 
-def grad_kl_divergence(
-    fn: NDArray, fn_approx: NDArray, grad_fn_approx: NDArray
-) -> NDArray:
+def grad_kl_divergence(fn: NDArray, fn_approx: NDArray, grad_fn_approx: NDArray) -> NDArray:
     """Returns the gradient of the KL divergence."""
     return np.real(np.einsum("g, gi -> i", fn / fn_approx, grad_fn_approx)) / fn.size
 

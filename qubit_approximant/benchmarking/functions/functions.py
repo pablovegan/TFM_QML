@@ -6,7 +6,9 @@ import numpy as np
 from numpy.typing import NDArray
 
 
-def gaussian(x: NDArray, mean: float = 0.0, std: float = 1, coef: Optional[float] = None) -> NDArray:
+def gaussian(
+    x: NDArray, mean: float = 0.0, std: float = 1, coef: Optional[float] = None
+) -> NDArray:
     """Return a gaussian function.
 
     Parameters

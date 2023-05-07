@@ -149,7 +149,12 @@ class IncrementalOptimizer(MultilayerOptimizer):
     layer_positions = ["initial", "middle", "final", "random"]
 
     def __init__(
-        self, min_layer, max_layer, optimizer: Optimizer, new_layer_coef: float, new_layer_position: str
+        self,
+        min_layer,
+        max_layer,
+        optimizer: Optimizer,
+        new_layer_coef: float,
+        new_layer_position: str,
     ) -> None:
         """
         Initialize a black box optimizer.
@@ -259,5 +264,7 @@ class IncrementalOptimizer(MultilayerOptimizer):
                 mean_diff.append(np.mean(np.abs(params_diff)))
                 std_diff.append(np.std(np.abs(params_diff)))
         else:
-            raise ValueError("Parameter difference only supported for new initial and final layers.")
+            raise ValueError(
+                "Parameter difference only supported for new initial and final layers."
+            )
         return mean_diff, std_diff
