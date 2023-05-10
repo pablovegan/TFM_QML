@@ -17,7 +17,7 @@ Documentation created with `mkdocs` can be found in https://pablovegan.github.io
 ## Installation
 
 With `pip`:
-```bash
+```console
 pip install qubit-approximant
 ```
 
