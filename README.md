@@ -9,7 +9,7 @@
 
 A `python` package for approximating quantum circuits with a single qubit.
 
-![alt text](/docs/gaussian.png)
+![alt text](https://raw.githubusercontent.com/pablovegan/QubitApproximant/c8a28f62f1a215949d6fa41a8080fb2c138921a7/docs/images/gaussian.png)
 
 ## Documentation and examples
 Documentation created with `mkdocs` can be found in https://pablovegan.github.io/QubitApproximant/.
