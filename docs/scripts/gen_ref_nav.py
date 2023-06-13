@@ -1,17 +1,25 @@
 """Generate the code reference pages and navigation."""
 
+import sys
+import os
 from pathlib import Path
 
 import mkdocs_gen_files
 
 nav = mkdocs_gen_files.Nav()
 
-main_project = "qubit_approximant"
+PATH_LIBRARY = "qubit_approximant"
 
-for path in sorted(Path(main_project).rglob("*.py")):
+if os.path.isdir(PATH_LIBRARY) is False:
+    sys.exit(
+        "Package folder was not found. Please change the PATH_LIBRARY"
+        " variable in the docs/scripts/gen_ref_nav.py script."
+    )
+
+for path in sorted(Path(PATH_LIBRARY).rglob("*.py")):
 
     module_path = path.relative_to("").with_suffix("")
-    doc_path = path.relative_to(main_project).with_suffix(".md")
+    doc_path = path.relative_to(PATH_LIBRARY).with_suffix(".md")
     full_doc_path = Path("reference", doc_path)
 
     parts = tuple(module_path.parts)

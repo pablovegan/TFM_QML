@@ -1,8 +1,0 @@
-# Runtime requirements
-numpy
-scipy
-pandas
-dill
-pathos
-pennylane
-mpi4py
