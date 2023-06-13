@@ -43,8 +43,8 @@ class Cost:
         try:
             self.metric = globals()[metric]
             self.grad_metric = globals()["grad_" + metric]
-        except KeyError:
-            raise ValueError("Invalid metric '{metric}'. Choose between 'MSE' or 'RMSE'.")
+        except KeyError as e:
+            raise ValueError("Invalid metric '{metric}'. Choose between 'MSE' or 'RMSE'.") from e
 
         self.circuit = circuit
         self.fn = fn
