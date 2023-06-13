@@ -169,10 +169,10 @@ exclude_lines = [
 ]
 
 [tool.coverage.paths]
-source = "qubit_approximant/*"
+source = ["qubit_approximant/*"]
 
 [tool.coverage.html]
-directory = "reports"
+directory = ["reports"]
 
 [tool.coverage.run]
 branch = true

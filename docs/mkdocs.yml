@@ -3,6 +3,7 @@ site_description: "A package for approximating quantum circuits with a single qu
 
 repo_url: https://github.com/pablovegan/QubitApproximant
 repo_name: pablovegan/QubitApproximant
+docs_dir: ./
 watch: [../README.md, ../qubit_approximant]
 
 
