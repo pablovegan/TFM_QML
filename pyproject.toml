@@ -30,7 +30,10 @@ documentation = "https://pablovegan.github.io/QubitApproximant/"
 
 [tool.setuptools]
 platforms = ["unix", "linux", "osx", "cygwin", "win32"]
-packages = ["qubit_approximant"]                        # optional
+
+[tool.setuptools.packages.find]
+include = ["qubit_approximant*"]  # needed to include subpackages
+namespaces = false  # to disable scanning PEP 420 namespaces (true by default)
 
 [tool.setuptools.dynamic]
 version = { attr = "qubit_approximant._version.__version__" }
