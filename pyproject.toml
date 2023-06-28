@@ -180,4 +180,4 @@ directory = ["reports"]
 [tool.coverage.run]
 branch = true
 parallel = true
-omit = ["qubit_approximant/__init__.py", "qubit_approximant/version.py"]
+omit = ["qubit_approximant/__init__.py", "qubit_approximant/_version.py"]
