@@ -131,7 +131,7 @@ class NonIncrementalOptimizer(MultilayerOptimizer):
         for layer in range(self.min_layer, self.max_layer + 1):
             params = self.optimizer(cost, grad_cost, params)
             self.params_list.append(params)
-            params = self.new_layer_coef * rng.randn((layer + 1) * self.params_layer)
+            params = self.new_layer_coef * rng.standard_normal((layer + 1) * self.params_layer)
         return self.params_list
 
 

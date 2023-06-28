@@ -11,20 +11,21 @@ x = np.linspace(-2, 2, 100)
 fn = np.exp(-((x) ** 2) / (2 * 0.5**2)) / (0.5 * np.sqrt(2 * np.pi))
 layers = 8
 np.random.seed(20)
-params = 0.7 * np.random.randn(4 * layers)
+rng = np.random.default_rng()
+params = 0.7 * rng.standard_normal(4 * layers)
 
 
 @pytest.mark.parametrize(
     ("circuit_class", "encoding", "metric", "params", "tol"),
     (
-        (CircuitRxRyRz, "prob", "mse", np.random.randn(4 * layers), 1e-4),
-        (CircuitRxRyRz, "amp", "mse", np.random.randn(4 * layers), 1e-4),
-        (CircuitRxRyRz, "prob", "rmse", np.random.randn(4 * layers), 5e-3),
-        (CircuitRxRyRz, "amp", "rmse", np.random.randn(4 * layers), 5e-3),
-        (CircuitRxRy, "prob", "mse", np.random.randn(3 * layers), 1e-3),
-        (CircuitRxRy, "prob", "rmse", np.random.randn(3 * layers), 1e-3),
-        (CircuitRxRy, "amp", "rmse", np.random.randn(3 * layers), 1e-2),
-        (CircuitRxRy, "amp", "mse", np.random.randn(3 * layers), 1e-2),
+        (CircuitRxRyRz, "prob", "mse", rng.standard_normal(4 * layers), 1e-4),
+        (CircuitRxRyRz, "amp", "mse", rng.standard_normal(4 * layers), 1e-4),
+        (CircuitRxRyRz, "prob", "rmse", rng.standard_normal(4 * layers), 5e-3),
+        (CircuitRxRyRz, "amp", "rmse", rng.standard_normal(4 * layers), 5e-3),
+        (CircuitRxRy, "prob", "mse", rng.standard_normal(3 * layers), 1e-3),
+        (CircuitRxRy, "prob", "rmse", rng.standard_normal(3 * layers), 1e-3),
+        (CircuitRxRy, "amp", "rmse", rng.standard_normal(3 * layers), 1e-2),
+        (CircuitRxRy, "amp", "mse", rng.standard_normal(3 * layers), 1e-2),
     ),
 )
 def test_blackbox(
@@ -40,8 +41,8 @@ def test_blackbox(
 @pytest.mark.parametrize(
     ("circuit_class", "encoding", "metric", "params", "tol"),
     (
-        (CircuitRxRyRz, "prob", "mse", np.random.randn(4 * layers), 0.1),
-        (CircuitRxRyRz, "prob", "rmse", np.random.randn(4 * layers), 0.1),
+        (CircuitRxRyRz, "prob", "mse", rng.standard_normal(4 * layers), 0.1),
+        (CircuitRxRyRz, "prob", "rmse", rng.standard_normal(4 * layers), 0.1),
     ),
 )
 def test_adam(

@@ -8,7 +8,8 @@ from qubit_approximant import Cost, CircuitRxRyRz, CircuitRxRy, CircuitRy
 
 x = np.linspace(-2, 2, 100)
 fn = np.exp(-((x) ** 2) / (2 * 0.5**2)) / (0.5 * np.sqrt(2 * np.pi))
-params = 0.3 * np.random.randn(4 * 6)
+rng = np.random.default_rng()
+params = 0.3 * rng.standard_normal(4 * 6)
 
 
 @pytest.mark.parametrize(
@@ -32,7 +33,7 @@ def test_grad_CircuitRxRyRz(
     assert (g := check_grad(cost, cost.grad, params)) < 1e-5, f"Check_grad = {g}"
 
 
-params = 0.3 * np.random.randn(3 * 6)
+params = 0.3 * rng.standard_normal(3 * 6)
 
 
 @pytest.mark.parametrize(
@@ -56,7 +57,7 @@ def test_grad_CircuitRxRy(
     assert (g := check_grad(cost, cost.grad, params)) < 1e-5, f"Check_grad = {g}"
 
 
-params = 0.3 * np.random.randn(2 * 6)
+params = 0.3 * rng.standard_normal(2 * 6)
 
 
 @pytest.mark.parametrize(

@@ -9,6 +9,7 @@ from qubit_approximant.core.optimizer import (
     NonIncrementalOptimizer,
 )
 
+rng = np.random.default_rng()
 
 x = np.linspace(-2, 2, 100)
 fn = np.exp(-((x) ** 2) / (2 * 0.5**2)) / (0.5 * np.sqrt(2 * np.pi))
@@ -22,10 +23,10 @@ optimizer = BlackBoxOptimizer(method="L-BFGS-B")
 @pytest.mark.parametrize(
     ("circuit", "metric", "params", "new_layer_position", "tol"),
     (
-        (CircuitRxRyRz(x, "prob"), "mse", np.random.randn(4 * min_layer), "initial", 1e-4),
-        (CircuitRxRyRz(x, "prob"), "mse", np.random.randn(4 * min_layer), "final", 1e-4),
-        (CircuitRxRyRz(x, "prob"), "mse", np.random.randn(4 * min_layer), "middle", 1e-4),
-        (CircuitRxRyRz(x, "prob"), "mse", np.random.randn(4 * min_layer), "random", 1e-4),
+        (CircuitRxRyRz(x, "prob"), "mse", rng.standard_normal(4 * min_layer), "initial", 1e-4),
+        (CircuitRxRyRz(x, "prob"), "mse", rng.standard_normal(4 * min_layer), "final", 1e-4),
+        (CircuitRxRyRz(x, "prob"), "mse", rng.standard_normal(4 * min_layer), "middle", 1e-4),
+        (CircuitRxRyRz(x, "prob"), "mse", rng.standard_normal(4 * min_layer), "random", 1e-4),
     ),
 )
 def test_incremental_optimizer(
@@ -44,8 +45,8 @@ def test_incremental_optimizer(
 @pytest.mark.parametrize(
     ("circuit", "metric", "params", "tol"),
     (
-        (CircuitRxRyRz(x, "prob"), "mse", np.random.randn(4 * min_layer), 1e-4),
-        (CircuitRxRyRz(x, "prob"), "rmse", np.random.randn(4 * min_layer), 5e-3),
+        (CircuitRxRyRz(x, "prob"), "mse", rng.standard_normal(4 * min_layer), 1e-4),
+        (CircuitRxRyRz(x, "prob"), "rmse", rng.standard_normal(4 * min_layer), 5e-3),
     ),
 )
 def test_nonincremental_optimizer(

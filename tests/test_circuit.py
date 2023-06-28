@@ -9,9 +9,10 @@ from scipy.optimize import check_grad
 from qubit_approximant import Circuit, CircuitRxRyRz, CircuitRxRy, CircuitRy
 
 
+rng = np.random.default_rng()
 x = np.linspace(-2, 2, 100)
-layers = np.random.randint(1, 12)
-params = np.random.randn(4 * layers)
+layers = rng.integers(1, 12)
+params = rng.standard_normal(4 * layers)
 
 
 @pytest.mark.parametrize(("x", "params"), ((x, params),))
@@ -47,9 +48,9 @@ def test_encoding_CircuitRxRyRz(x: np.ndarray, params: np.ndarray):
 @pytest.mark.parametrize(
     ("circuit_class", "x", "params"),
     (
-        (CircuitRxRyRz, x, np.random.randn(4)),
-        (CircuitRxRy, x, np.random.randn(3)),
-        (CircuitRy, x, np.random.randn(2)),
+        (CircuitRxRyRz, x, rng.standard_normal(4)),
+        (CircuitRxRy, x, rng.standard_normal(3)),
+        (CircuitRy, x, rng.standard_normal(2)),
     ),
 )
 def test_grad_layer(circuit_class: Type[Circuit], x: np.ndarray, params: np.ndarray):
@@ -68,9 +69,9 @@ layers = np.random.randint(1, 12)
 @pytest.mark.parametrize(
     ("circuit_class", "x", "params"),
     (
-        (CircuitRxRyRz, x, np.random.randn(4 * layers)),
-        (CircuitRxRy, x, np.random.randn(3 * layers)),
-        (CircuitRy, x, np.random.randn(2 * layers)),
+        (CircuitRxRyRz, x, rng.standard_normal(4 * layers)),
+        (CircuitRxRy, x, rng.standard_normal(3 * layers)),
+        (CircuitRy, x, rng.standard_normal(2 * layers)),
     ),
 )
 def test_grad_prob_encoding(circuit_class: Type[Circuit], x: np.ndarray, params: np.ndarray):

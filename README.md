@@ -67,7 +67,7 @@ and find the optimum parameters for the chosen circuit
 
 ```python
 layers = 6
-init_params = np.random.randn(4 * layers)
+init_params = np.random.default_rng().standard_normal(4 * layers)
 opt_params = optimizer(cost, cost.grad, init_params)
 ```
 
@@ -120,7 +120,7 @@ cost = Cost(fn, circuit, metric='mse')
 optimizer = BlackBoxOptimizer(method="L-BFGS-B")
 
 min_layer = 3
-init_params = np.random.randn(4 * min_layer)
+init_params = np.random.default_rng().standard_normal(4 * min_layer)
 layerwise_opt = LayerwiseOptimizer(
     optimizer,
     min_layer=min_layer,
