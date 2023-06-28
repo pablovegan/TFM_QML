@@ -215,6 +215,8 @@ class IncrementalOptimizer(MultilayerOptimizer):
         """Create new initial parameters from the optimized parameters
         with one layer less."""
 
+        rng = np.random.default_rng()
+
         if self.new_layer_position == "final":
             layer = current_layer
         elif self.new_layer_position == "middle":

@@ -9,13 +9,12 @@ from qubit_approximant.core.optimizer import (
     NonIncrementalOptimizer,
 )
 
-rng = np.random.default_rng()
 
 x = np.linspace(-2, 2, 100)
 fn = np.exp(-((x) ** 2) / (2 * 0.5**2)) / (0.5 * np.sqrt(2 * np.pi))
 min_layer = 6
 max_layer = 8
-np.random.seed(20)
+rng = np.random.default_rng(20)
 
 optimizer = BlackBoxOptimizer(method="L-BFGS-B")
 
