@@ -48,7 +48,7 @@ def metric_results(
 
         def fn_approx_eval(x):
             circuit.x = np.array([x])
-            return circuit.encoding(params)[0]  # one element array
+            return circuit.encoding(params)[0]  # one element array  # noqa: B023
 
         l1_list.append(l1_norm(fn_eval, fn_approx_eval, x_limits))
         l2_list.append(l2_norm(fn_eval, fn_approx_eval, x_limits))
@@ -56,7 +56,7 @@ def metric_results(
 
         def fn_approx_inf_eval(x):
             circuit.x = np.array(x)
-            return circuit.encoding(params)  # one element array
+            return circuit.encoding(params)  # one element array  # noqa: B023
 
         inf_list.append(inf_norm(fn_eval, fn_approx_inf_eval, x_limits))
 

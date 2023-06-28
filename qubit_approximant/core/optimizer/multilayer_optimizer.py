@@ -126,11 +126,12 @@ class NonIncrementalOptimizer(MultilayerOptimizer):
         self.params_layer = init_params.size // self.min_layer
         self.params_list = []
         params = init_params
+        rng = np.random.default_rng()
 
         for layer in range(self.min_layer, self.max_layer + 1):
             params = self.optimizer(cost, grad_cost, params)
             self.params_list.append(params)
-            params = self.new_layer_coef * np.random.randn((layer + 1) * self.params_layer)
+            params = self.new_layer_coef * rng.randn((layer + 1) * self.params_layer)
         return self.params_list
 
 
@@ -221,9 +222,10 @@ class IncrementalOptimizer(MultilayerOptimizer):
         elif self.new_layer_position == "initial":
             layer = 0
         elif self.new_layer_position == "random":
-            layer = np.random.randint(0, high=current_layer + 1, dtype=int)
+            rng = np.random.default_rng()
+            layer = rng.integers(0, high=current_layer + 1, dtype=int)
 
-        new_layer_val = self.new_layer_coef * np.random.randn(4)
+        new_layer_val = self.new_layer_coef * rng.standard_normal(4)
         params = np.insert(params, layer, new_layer_val)
 
         return params

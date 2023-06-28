@@ -65,9 +65,9 @@ class BlackBoxOptimizer(Optimizer):
         "method_kwargs",
     )  # faster memory access to the attributes than using __dict__
 
-    blackbox_methods = ["CG", "L-BFGS-B", "COBYLA", "SLSQP"]
+    blackbox_methods = ("CG", "L-BFGS-B", "COBYLA", "SLSQP")
 
-    def __init__(self, method: str, method_kwargs: dict = {}):
+    def __init__(self, method: str, method_kwargs: dict | None = None):
         """
         Initialize a black box optimizer.
 
@@ -80,7 +80,7 @@ class BlackBoxOptimizer(Optimizer):
         """
         if method in BlackBoxOptimizer.blackbox_methods:
             self.method = method
-            self.method_kwargs = method_kwargs
+            self.method_kwargs = {} if method_kwargs is None else method_kwargs
         else:
             raise ValueError(f"Optimization {method} is not supported.")
 
@@ -226,7 +226,8 @@ class AdamOptimizer(GDOptimizer):
         super().__init__(iters, step_size)
 
     def step(self, grad_cost: Callable, params: NDArray) -> NDArray:
-        """Update the parameters with a step of Adam. Adam changes the step size in each iteration."""
+        """Update the parameters with a step of Adam. Adam changes the step
+        size in each iteration."""
         m = zeros_like(params)
         v = zeros_like(params)
         grad = grad_cost(params)

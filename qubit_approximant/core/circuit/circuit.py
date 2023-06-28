@@ -215,7 +215,8 @@ class Circuit(ABC):
         Returns
         -------
         tuple[NDArray, NDArray]
-            Gradients of the probability with respect to all parameters and the probability for each x.
+            Gradients of the probability with respect to all parameters
+            and the probability for each x.
         """
         grad_amp, amp = self.grad_amp(params)
         fn_approx = amp.real**2 + amp.imag**2

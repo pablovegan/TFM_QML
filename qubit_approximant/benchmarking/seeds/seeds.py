@@ -58,12 +58,12 @@ def benchmark_seeds(
     num_nodes = comm.Get_size()
     rank = comm.Get_rank()
     seeds_node = num_seeds // num_nodes
-
-    seed_list = np.random.choice(range(rank * 2000, (rank + 1) * 2000), seeds_node, replace=False)
+    rng = np.random.default_rng()
+    seed_list = rng.choice(range(rank * 2000, (rank + 1) * 2000), seeds_node, replace=False)
 
     def metric_results_seed(seed: int) -> Tuple[list[float], ...]:
-        np.random.seed(seed)
-        params = opt.new_layer_coef * np.random.randn(circuit.params_layer * opt.min_layer)
+        rng = np.random.default_rng(seed)
+        params = opt.new_layer_coef * rng.standard_normal(circuit.params_layer * opt.min_layer)
         params_list = opt(cost, cost.grad, params)
         return metric_results(fn, fn_kwargs, circuit, params_list)
 
